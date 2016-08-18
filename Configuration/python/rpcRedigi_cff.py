@@ -23,6 +23,11 @@ def customise_rpcRedigi(process):
         timingRPCOffset = cms.double(50.0)
     )
 
+    process.RandomNumberGeneratorService.simMuonRPCReDigis = cms.PSet(
+        initialSeed = cms.untracked.uint32(13579),
+        engineName = cms.untracked.string('TRandom3')
+    )
+
     process.rpcRecHits.rpcDigiLabel = cms.InputTag("simMuonRPCReDigis")
     process.validationMuonRPCDigis.rpcDigiTag = cms.untracked.InputTag("simMuonRPCReDigis")
     process.reconstruction_step.replace(
