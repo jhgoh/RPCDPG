@@ -124,3 +124,7 @@ from FWCore.ParameterSet.Utilities import cleanUnscheduled
 process=cleanUnscheduled(process)
 
 # Customisation from command line
+
+import sys
+if len(sys.argv) > 3:
+    process.simMuonRPCReDigis.digiIRPCModelConfig.IRPC_time_resolution = float(sys.argv[2])
