@@ -1,14 +1,14 @@
 import FWCore.ParameterSet.Config as cms
 
 def customise_rpcRedigi(process):
-    process.load("SimMuon.RPCDigitizer.muonrpcdigi_cfi")
+    process.load('Configuration.StandardSequences.Digi_cff')
 
     process.simMuonRPCReDigis = process.simMuonRPCDigis.clone()
     process.simMuonRPCReDigis.digiIRPCModelConfig = cms.PSet(
         Frate = cms.double(1.0),
         Gate = cms.double(25.0),
         IRPC_electronics_jitter = cms.double(0.025),
-        IRPC_time_resolution = cms.double(0.05),
+        IRPC_time_resolution = cms.double(0.1),
         Nbxing = cms.int32(9),
         Rate = cms.double(0.0),
         averageClusterSize = cms.double(1.5),
