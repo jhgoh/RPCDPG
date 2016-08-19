@@ -6,10 +6,10 @@ gStyle.SetOptStat(0)
 
 modules = [
     "SingleMuPt100",
-    #"HSCPppstau_M_156", "HSCPppstau_M_200", "HSCPppstau_M_308", "HSCPppstau_M_494",
-    #"HSCPppstau_M_651", "HSCPppstau_M_1029", "HSCPppstau_M_1218", "HSCPppstau_M_1599",
-    "HSCPstop_M_100", "HSCPstop_M_400", "HSCPstop_M_600", "HSCPstop_M_1000",
-    "HSCPstop_M_1200", "HSCPstop_M_1600", "HSCPstop_M_200", "HSCPstop_M_2600",
+    "HSCPppstau_M_156", "HSCPppstau_M_200", "HSCPppstau_M_308", "HSCPppstau_M_494",
+    "HSCPppstau_M_651", "HSCPppstau_M_1029", "HSCPppstau_M_1218", "HSCPppstau_M_1599",
+    #"HSCPstop_M_100", "HSCPstop_M_200", "HSCPstop_M_400", "HSCPstop_M_600",
+    #"HSCPstop_M_1000", "HSCPstop_M_1200", "HSCPstop_M_1600", "HSCPstop_M_2600",
 ]
 colors = [
     kBlack,
