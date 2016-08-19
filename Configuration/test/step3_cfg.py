@@ -126,5 +126,5 @@ process=cleanUnscheduled(process)
 # Customisation from command line
 
 import sys
-if len(sys.argv) > 3:
+if len(sys.argv) > 2:
     process.simMuonRPCReDigis.digiIRPCModelConfig.IRPC_time_resolution = float(sys.argv[2])

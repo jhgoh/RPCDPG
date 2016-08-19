@@ -150,6 +150,8 @@ void HSCPTimeOfFlightAnalyzer::analyze(const edm::Event& event, const edm::Event
       const RPCDetId detId = recHit.rpcId();
       const RPCRoll* roll = rpcGeom->roll(detId);
       if ( !roll->isIRPC() ) continue;
+      //if ( recHit.BunchX() != 0 ) continue;
+      if ( recHit.time() == 0 ) continue;
 
       //const auto recHitGPos = roll->toGlobal(LocalPoint(0,0,0));
       //const double r0 = recHitGPos.mag();
@@ -195,6 +197,8 @@ void HSCPTimeOfFlightAnalyzer::analyze(const edm::Event& event, const edm::Event
             }
           }
         }
+        //if ( rpcHit->BunchX() != 0 ) continue;
+        if ( rpcHit->time() == 0 ) continue;
         //if ( rpcHit->timeError() < 0 ) continue;
 
         const auto& bounds = roll->surface().bounds();
