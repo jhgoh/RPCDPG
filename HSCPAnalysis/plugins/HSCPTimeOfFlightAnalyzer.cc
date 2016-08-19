@@ -59,6 +59,9 @@ private:
   TH1F* hRecHitTime_;
   TH1F* hMuonHitTime_;
   TH1F* hMuonHitCorrTime_;
+
+  TH1F* hMuonM_;
+  TH1F* hMuonCorrM_;
 };
 
 HSCPTimeOfFlightAnalyzer::HSCPTimeOfFlightAnalyzer(const edm::ParameterSet& pset):
@@ -80,6 +83,9 @@ HSCPTimeOfFlightAnalyzer::HSCPTimeOfFlightAnalyzer(const edm::ParameterSet& pset
   hRecHitTime_ = fs->make<TH1F>("hRecHitTime", "RecHitTime;Time (ns)", nbins, -xmax, xmax);
   hMuonHitTime_ = fs->make<TH1F>("hMuonHitTime", "MuonHitTime;Time (ns)", nbins, -xmax, xmax);
   hMuonHitCorrTime_ = fs->make<TH1F>("hMuonHitCorrTime", "MuonHitCorrTime;Time (ns)", nbins, -xmax, xmax);
+
+  hMuonM_ = fs->make<TH1F>("hMuonM", "MuonM;Mass (GeV)", 2200, -100, 2100);
+  hMuonCorrM_ = fs->make<TH1F>("hMuonCorrM", "hMuonCorrM;Mass (GeV)", 2200, -100, 2100);
 }
 
 template<typename T1, typename T2>
@@ -163,6 +169,8 @@ void HSCPTimeOfFlightAnalyzer::analyze(const edm::Event& event, const edm::Event
     for ( auto& mu : *muonsHandle ) {
       if ( !mu.isRPCMuon() ) continue;
 
+      int nHit = 0;
+      double sumMp = 0, sumCorrMp = 0;
       for ( auto& match : mu.matches() ) {
         const DetId& detId = match.id;
         if ( detId.det() != DetId::Muon or detId.subdetId() != MuonSubdetId::RPC ) continue;
@@ -212,9 +220,20 @@ void HSCPTimeOfFlightAnalyzer::analyze(const edm::Event& event, const edm::Event
           return -(match.y > 0 ? 1 : -1)*std::hypot(dx, match.y)/signalSpeed_;
         }();
 
+        const double r  = roll->toGlobal(LocalPoint(match.x, match.y)).mag();
+        const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
+        const double beta = r/(r0+speedOfLight_*rpcHit->time());
+        const double corrBeta = r/(r0+speedOfLight_*(rpcHit->time()-timeCorr));
+
+        ++nHit;
+        sumMp += sqrt(1/beta/beta-1);
+        sumCorrMp += sqrt(1/corrBeta/corrBeta-1);
+
         hMuonHitTime_->Fill(rpcHit->time());
         hMuonHitCorrTime_->Fill(rpcHit->time()-timeCorr);
       }
+      hMuonM_->Fill(mu.p()*sumMp/nHit);
+      hMuonCorrM_->Fill(mu.p()*sumCorrMp/nHit);
     }
   }
 
