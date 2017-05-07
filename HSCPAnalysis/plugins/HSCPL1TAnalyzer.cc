@@ -477,7 +477,6 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
 
     for ( auto& mu : *muonHandle ) {
       if ( std::abs(mu.eta()) >= 2.5 or mu.pt() < 20 ) continue;
-      if ( ++b_muon_n >= muon_N ) break;
 
       b_muon_pt[b_muon_n] = mu.pt();
       b_muon_eta[b_muon_n] = mu.eta();
@@ -490,14 +489,16 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
 
       const double dR1 = !genParticle1 ? 999 : deltaR(mu, *genParticle1);
       const double dR2 = !genParticle2 ? 999 : deltaR(mu, *genParticle2);
-      if ( dR1 < dR2 ) {
+      if ( dR1 < 999 and dR1 < dR2 ) {
         b_muon_genDR[b_muon_n] = dR1;
         b_muon_genPdgId[b_muon_n] = genParticle1->pdgId();
       }
-      else if ( dR2 < dR1 ) {
+      else if ( dR2 < 999 and dR2 < dR1 ) {
         b_muon_genDR[b_muon_n] = dR2;
         b_muon_genPdgId[b_muon_n] = genParticle2->pdgId();
       }
+
+      if ( ++b_muon_n >= muon_N ) break;
     }
   }
 
