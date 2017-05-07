@@ -19,6 +19,8 @@
 #include "SimDataFormats/RPCDigiSimLink/interface/RPCDigiSimLinkfwd.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
@@ -27,6 +29,9 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/RPCGeometry/interface/RPCGeometry.h"
+
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -59,8 +64,10 @@ private:
   edm::EDGetTokenT<edm::PSimHitContainer> rpcSimHitsToken_;
   edm::EDGetTokenT<RPCDigiCollection> rpcDigisToken_;
   edm::EDGetTokenT<edm::DetSetVector<RPCDigiSimLink>> rpcSimDigisToken_;
+
   edm::EDGetTokenT<RPCRecHitCollection> rpcRecHitsToken_;
-  edm::EDGetTokenT<reco::MuonCollection> muonsToken_;
+  edm::EDGetTokenT<reco::MuonCollection> muonToken_;
+  edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
 
   TTree* tree_;
 
@@ -69,7 +76,7 @@ private:
   short b_gen2_pdgId;
   double b_gen2_pt, b_gen2_eta, b_gen2_phi, b_gen2_m, b_gen2_beta;
 
-  const static unsigned short simHit1_N = 100;
+  const static unsigned short simHit1_N = 1000;
   unsigned short b_simHit1_n;
   bool b_simHit1_isBarrel[simHit1_N], b_simHit1_isIRPC[simHit1_N];
   short b_simHit1_sector[simHit1_N], b_simHit1_station[simHit1_N], b_simHit1_roll[simHit1_N];
@@ -79,7 +86,7 @@ private:
   double b_simHit1_tof[simHit1_N];
   double b_simHit1_lx[simHit1_N], b_simHit1_ly[simHit1_N];
 
-  const static unsigned short simHit2_N = 100;
+  const static unsigned short simHit2_N = 1000;
   unsigned short b_simHit2_n;
   bool b_simHit2_isBarrel[simHit2_N], b_simHit2_isIRPC[simHit2_N];
   short b_simHit2_sector[simHit2_N], b_simHit2_station[simHit2_N], b_simHit2_roll[simHit2_N];
@@ -89,7 +96,7 @@ private:
   double b_simHit2_tof[simHit2_N];
   double b_simHit2_lx[simHit2_N], b_simHit2_ly[simHit2_N];
 
-  const static unsigned short simDigi1_N = 100;
+  const static unsigned short simDigi1_N = 1000;
   unsigned short b_simDigi1_n;
   bool b_simDigi1_isBarrel[simDigi1_N], b_simDigi1_isIRPC[simDigi1_N];
   short b_simDigi1_sector[simDigi1_N], b_simDigi1_station[simDigi1_N], b_simDigi1_roll[simDigi1_N];
@@ -100,7 +107,7 @@ private:
   double b_simDigi1_lx[simDigi1_N], b_simDigi1_ly[simDigi1_N];
   short b_simDigi1_bx[simDigi1_N];
 
-  const static unsigned short simDigi2_N = 100;
+  const static unsigned short simDigi2_N = 1000;
   unsigned short b_simDigi2_n;
   bool b_simDigi2_isBarrel[simDigi2_N], b_simDigi2_isIRPC[simDigi2_N];
   short b_simDigi2_sector[simDigi2_N], b_simDigi2_station[simDigi2_N], b_simDigi2_roll[simDigi2_N];
@@ -110,6 +117,14 @@ private:
   double b_simDigi2_tof[simDigi2_N], b_simDigi2_t0[simDigi2_N];
   double b_simDigi2_lx[simDigi2_N], b_simDigi2_ly[simDigi2_N];
   short b_simDigi2_bx[simDigi2_N];
+
+  const static unsigned short muon_N = 10;
+  unsigned short b_muon_n;
+  double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
+  bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N];
+  double b_muon_time[muon_N], b_muon_RPCTime[muon_N];
+  double b_muon_genDR[muon_N];
+  short b_muon_genPdgId[muon_N];
 
 };
 
@@ -123,7 +138,8 @@ HSCPL1TAnalyzer::HSCPL1TAnalyzer(const edm::ParameterSet& pset):
   rpcDigisToken_(consumes<RPCDigiCollection>(pset.getParameter<edm::InputTag>("rpcDigis"))),
   rpcSimDigisToken_(consumes<edm::DetSetVector<RPCDigiSimLink>>(pset.getParameter<edm::InputTag>("rpcSimDigis"))),
   rpcRecHitsToken_(consumes<RPCRecHitCollection>(pset.getParameter<edm::InputTag>("rpcRecHits"))),
-  muonsToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons")))
+  muonToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
+  vertexToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertex")))
 {
   usesResource("TFileService");
   edm::Service<TFileService> fs;
@@ -212,6 +228,17 @@ HSCPL1TAnalyzer::HSCPL1TAnalyzer(const edm::ParameterSet& pset):
   tree_->Branch("simDigi2_ly", b_simDigi2_ly, "simDigi2_ly[simDigi2_n]/D");
   tree_->Branch("simDigi2_bx", b_simDigi2_bx, "simDigi2_bx[simDigi2_n]/S");
 
+  tree_->Branch("muon_n", &b_muon_n, "muon_n/s");
+  tree_->Branch("muon_pt", b_muon_pt, "muon_pt[muon_n]/D");
+  tree_->Branch("muon_eta", b_muon_eta, "muon_eta[muon_n]/D");
+  tree_->Branch("muon_phi", b_muon_phi, "muon_phi[muon_n]/D");
+  tree_->Branch("muon_isLoose", b_muon_isLoose, "muon_isLoose[muon_n]/O");
+  tree_->Branch("muon_isTight", b_muon_isTight, "muon_isTight[muon_n]/O");
+  tree_->Branch("muon_time", b_muon_time, "muon_time[muon_n]/D");
+  tree_->Branch("muon_RPCTime", b_muon_RPCTime, "muon_RPCTime[muon_n]/D");
+  tree_->Branch("muon_genDR", b_muon_genDR, "muon_genDR[muon_n]/D");
+  tree_->Branch("muon_genPdgId", b_muon_genPdgId, "muon_genPdgId[muon_n]/S");
+
 }
 
 template<typename T1, typename T2>
@@ -226,6 +253,7 @@ double dist(const T1& a, const T2& b)
 void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& eventSetup)
 {
   b_simHit1_n = b_simHit2_n = b_simDigi1_n = b_simDigi2_n = 0;
+  b_muon_n = 0;
 
   edm::Handle<reco::GenParticleCollection> genParticleHandle;
   event.getByToken(genParticleToken_, genParticleHandle);
@@ -241,6 +269,12 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
 
   edm::Handle<RPCRecHitCollection> rpcRecHitsHandle;
   event.getByToken(rpcRecHitsToken_, rpcRecHitsHandle);
+
+  edm::Handle<reco::MuonCollection> muonHandle;
+  event.getByToken(muonToken_, muonHandle);
+
+  edm::Handle<reco::VertexCollection> vertexHandle;
+  event.getByToken(vertexToken_, vertexHandle);
 
   edm::ESHandle<RPCGeometry> rpcGeom;
   eventSetup.get<MuonGeometryRecord>().get(rpcGeom);
@@ -425,6 +459,44 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
 
           ++b_simDigi2_n;
         }
+      }
+    }
+  }
+
+  if ( muonHandle.isValid() and vertexHandle.isValid() ) {
+    const reco::Vertex* pv = 0;
+    for ( auto& vtx : *vertexHandle ) {
+      if ( vtx.isFake() ) continue;
+      if ( vtx.ndof() <= 4 ) continue;
+      if ( std::abs(vtx.z()) > 24 ) continue;
+      if ( std::abs(vtx.position().rho()) > 2 ) continue;
+
+      pv = &vtx;
+      break;
+    }
+
+    for ( auto& mu : *muonHandle ) {
+      if ( std::abs(mu.eta()) >= 2.5 or mu.pt() < 20 ) continue;
+      if ( ++b_muon_n >= muon_N ) break;
+
+      b_muon_pt[b_muon_n] = mu.pt();
+      b_muon_eta[b_muon_n] = mu.eta();
+      b_muon_phi[b_muon_n] = mu.phi();
+      b_muon_isLoose[b_muon_n] = muon::isLooseMuon(mu);
+      b_muon_isTight[b_muon_n] = !pv ? false : muon::isTightMuon(mu, *pv);
+
+      b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
+      b_muon_RPCTime[b_muon_n] = mu.rpcTime().timeAtIpInOut;
+
+      const double dR1 = !genParticle1 ? 999 : deltaR(mu, *genParticle1);
+      const double dR2 = !genParticle2 ? 999 : deltaR(mu, *genParticle2);
+      if ( dR1 < dR2 ) {
+        b_muon_genDR[b_muon_n] = dR1;
+        b_muon_genPdgId[b_muon_n] = genParticle1->pdgId();
+      }
+      else if ( dR2 < dR1 ) {
+        b_muon_genDR[b_muon_n] = dR2;
+        b_muon_genPdgId[b_muon_n] = genParticle2->pdgId();
       }
     }
   }

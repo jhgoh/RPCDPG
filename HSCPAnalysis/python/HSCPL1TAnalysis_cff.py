@@ -7,6 +7,7 @@ HSCPL1TAnalyzer = cms.EDAnalyzer("HSCPL1TAnalyzer",
     rpcDigis = cms.InputTag("rpcDigis"),
     rpcRecHits = cms.InputTag("rpcRecHits"),
     muons = cms.InputTag("muons"),
+    vertex = cms.InputTag("offlinePrimaryVertices"),
     signalPropagationSpeed = cms.double(0.66), ## To be overridden by SimMuon.RPCDigitizer.muonRPCDigis_cfi.simMuonRPCDigis, this may depend on eras
     #signalPdgId = cms.uint32(13),
     signalPdgId = cms.uint32(1000015),
