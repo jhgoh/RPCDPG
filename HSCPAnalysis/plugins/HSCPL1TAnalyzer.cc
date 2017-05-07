@@ -53,6 +53,7 @@ public:
   ~HSCPL1TAnalyzer() {};
 
   void analyze(const edm::Event& event, const edm::EventSetup& eventSetup) override;
+  double computeRPCTimeNew(const reco::Muon& mu, const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom) const;
 
 private:
   const double speedOfLight_;
@@ -122,7 +123,7 @@ private:
   unsigned short b_muon_n;
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
   bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N];
-  double b_muon_time[muon_N], b_muon_RPCTime[muon_N];
+  double b_muon_time[muon_N], b_muon_RPCTime[muon_N], b_muon_RPCTimeNew[muon_N];
   double b_muon_genDR[muon_N];
   short b_muon_genPdgId[muon_N];
 
@@ -236,6 +237,7 @@ HSCPL1TAnalyzer::HSCPL1TAnalyzer(const edm::ParameterSet& pset):
   tree_->Branch("muon_isTight", b_muon_isTight, "muon_isTight[muon_n]/O");
   tree_->Branch("muon_time", b_muon_time, "muon_time[muon_n]/D");
   tree_->Branch("muon_RPCTime", b_muon_RPCTime, "muon_RPCTime[muon_n]/D");
+  tree_->Branch("muon_RPCTimeNew", b_muon_RPCTimeNew, "muon_RPCTimeNew[muon_n]/D");
   tree_->Branch("muon_genDR", b_muon_genDR, "muon_genDR[muon_n]/D");
   tree_->Branch("muon_genPdgId", b_muon_genPdgId, "muon_genPdgId[muon_n]/S");
 
@@ -463,7 +465,7 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
     }
   }
 
-  if ( muonHandle.isValid() and vertexHandle.isValid() ) {
+  if ( muonHandle.isValid() and vertexHandle.isValid() and rpcRecHitsHandle.isValid() ) {
     const reco::Vertex* pv = 0;
     for ( auto& vtx : *vertexHandle ) {
       if ( vtx.isFake() ) continue;
@@ -487,6 +489,8 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
       b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
       b_muon_RPCTime[b_muon_n] = mu.rpcTime().timeAtIpInOut;
 
+      b_muon_RPCTimeNew[b_muon_n] = computeRPCTimeNew(mu, *rpcRecHitsHandle, rpcGeom);
+
       const double dR1 = !genParticle1 ? 999 : deltaR(mu, *genParticle1);
       const double dR2 = !genParticle2 ? 999 : deltaR(mu, *genParticle2);
       if ( dR1 < 999 and dR1 < dR2 ) {
@@ -503,6 +507,44 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
   }
 
   tree_->Fill();
+}
+
+double HSCPL1TAnalyzer::computeRPCTimeNew(const reco::Muon& mu, const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom) const
+{
+  std::vector<double> hitTimes, hitTimesAll;
+  std::vector<int> hitBx;
+
+  reco::TrackRef trackRef;
+  if ( mu.isGlobalMuon() ) trackRef = mu.globalTrack();
+  else if ( mu.isStandAloneMuon() ) trackRef = mu.standAloneMuon();
+
+  if ( trackRef.isNonnull() ) {
+    for ( auto ihit = trackRef->recHitsBegin(); ihit != trackRef->recHitsEnd(); ++ihit ) {
+      if ( !(*ihit)->isValid() ) continue;
+      if ( (*ihit)->geographicalId().det() != DetId::Muon or (*ihit)->geographicalId().subdetId() != 3 ) continue;
+
+      const RPCDetId detId((*ihit)->rawId());
+      //const RPCRoll* roll = rpcGeom->roll(detId);
+
+      const auto hitRange = rpcHits.get(detId);
+      for ( auto rpcHit = hitRange.first; rpcHit != hitRange.second; ++rpcHit ) {
+        if ( rpcHit->timeError() >= 0 ) { // if time is filled in
+          hitTimes.push_back(rpcHit->time());
+          hitTimesAll.push_back(rpcHit->time());
+        }
+        else hitTimesAll.push_back(rpcHit->BunchX()*25);
+
+        hitBx.push_back(rpcHit->BunchX());
+      }
+    }
+  }
+
+  const double sumTime = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0);
+  //const double sumTimeAll = std::accumulate(hitTimesAll.begin(), hitTimesAll.end(), 0.0);
+  //const double sumBx = std::accumulate(hitBx.begin(), hitBx.end(), 0.0);
+
+  return hitTimes.empty() ? 0 : sumTime/hitTimes.size();
+  //return sumTimeAll/hitTimesAll.size();
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
