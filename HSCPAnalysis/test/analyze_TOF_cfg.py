@@ -7,8 +7,10 @@ process = cms.Process('Analysis',eras.Phase2C1)
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.Geometry.GeometryExtended2023D1Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D12_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D12Reco_cff')
 
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
@@ -19,26 +21,23 @@ process.source = cms.Source("PoolSource",
 #    duplicateCheckMode = cms.untracked.string("noDuplicateCheck"),
 )
 
+process.source.fileNames = [
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/0C58D987-E5FD-E611-935C-02163E01A5AD.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/4EE8F8EF-E0FD-E611-B9DF-02163E014421.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/90D3BB3B-E6FD-E611-B189-02163E011CEE.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/9EE612A4-E7FD-E611-83F0-02163E0143D2.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/AC00BAF8-E1FD-E611-B58D-02163E01A710.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/D6372AD0-DEFD-E611-957F-02163E01A2F4.root",
+"root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/E4AD50CD-C3FD-E611-A9FE-02163E01A312.root",
+]
 
-if len(sys.argv) > 2:
-    module = sys.argv[2]
-    basedir = "root://eoscms//eos/cms/store/user/jhgoh/RPCUpgrade/20160816_1/"
-    process.source.fileNames.append("%s/%s/step3_000.root" % (basedir, module))
-    for line in open("step2_%s.txt" % module):
-        process.source.secondaryFileNames.append("root://eoscms//eos/cms/%s" % line)
-else:
-    module = "SingleMuPt100"
-    basedir = "root://eoscms//eos/cms/store/user/jhgoh/RPCUpgrade/20160816_2/"
-    process.source.fileNames.append("%s/out_reco.root" % basedir)
-    process.source.secondaryFileNames.append("%s/out_digi.root" % basedir)
-
-process.load("RPCUpgrade.HSCPAnalysis.tofAnalysis_cff")
-process.tofAnalysis.rpcDigis = "simMuonRPCDigis"
+process.load("RPCUpgrade.HSCPAnalysis.HSCPL1TAnalysis_cff")
+process.HSCPL1TAnalyzer.rpcDigis = "simMuonRPCDigis"
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("hist_%s.root" % module),
+    fileName = cms.string("hist.root"),
 )
 
 process.p = cms.Path(
-    process.tofAnalysis
+    process.HSCPL1TAnalyzer
 )
 

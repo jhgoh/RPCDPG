@@ -391,7 +391,7 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
           }
           else {
             b_simDigi1_wheel[b_simDigi1_n] = b_simDigi1_station[b_simDigi1_n] = 0;
-            b_simDigi1_disk[b_simDigi1_n] = detId.station();
+            b_simDigi1_disk[b_simDigi1_n] = detId.region()*detId.station();
             b_simDigi1_ring[b_simDigi1_n] = detId.ring();
           }
 
