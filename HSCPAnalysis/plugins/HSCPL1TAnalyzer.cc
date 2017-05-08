@@ -119,6 +119,17 @@ private:
   double b_simDigi2_lx[simDigi2_N], b_simDigi2_ly[simDigi2_N];
   short b_simDigi2_bx[simDigi2_N];
 
+  const static unsigned short rpcHit_N = 1000;
+  unsigned short b_rpcHit_n;
+  bool b_rpcHit_isBarrel[rpcHit_N], b_rpcHit_isIRPC[rpcHit_N];
+  short b_rpcHit_sector[rpcHit_N], b_rpcHit_station[rpcHit_N], b_rpcHit_roll[rpcHit_N];
+  short b_rpcHit_wheel[rpcHit_N], b_rpcHit_layer[rpcHit_N];
+  short b_rpcHit_disk[rpcHit_N], b_rpcHit_ring[rpcHit_N];
+  double b_rpcHit_x[rpcHit_N], b_rpcHit_y[rpcHit_N], b_rpcHit_z[rpcHit_N];
+  double b_rpcHit_time[rpcHit_N], b_rpcHit_timeErr[rpcHit_N], b_rpcHit_t0[rpcHit_N];
+  double b_rpcHit_lx[rpcHit_N], b_rpcHit_ly[rpcHit_N];
+  short b_rpcHit_bx[rpcHit_N];
+
   const static unsigned short muon_N = 10;
   unsigned short b_muon_n;
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
@@ -229,6 +240,25 @@ HSCPL1TAnalyzer::HSCPL1TAnalyzer(const edm::ParameterSet& pset):
   tree_->Branch("simDigi2_ly", b_simDigi2_ly, "simDigi2_ly[simDigi2_n]/D");
   tree_->Branch("simDigi2_bx", b_simDigi2_bx, "simDigi2_bx[simDigi2_n]/S");
 
+  tree_->Branch("rpcHit_n", &b_rpcHit_n, "rpcHit_n/s");
+  tree_->Branch("rpcHit_isBarrel", b_rpcHit_isBarrel, "rpcHit_isBarrel[rpcHit_n]/O");
+  tree_->Branch("rpcHit_isIRPC", b_rpcHit_isIRPC, "rpcHit_isIRPC[rpcHit_n]/O");
+  tree_->Branch("rpcHit_sector", b_rpcHit_sector, "rpcHit_sector[rpcHit_n]/S");
+  tree_->Branch("rpcHit_station", b_rpcHit_station, "rpcHit_station[rpcHit_n]/S");
+  tree_->Branch("rpcHit_wheel", b_rpcHit_wheel, "rpcHit_wheel[rpcHit_n]/S");
+  tree_->Branch("rpcHit_layer", b_rpcHit_layer, "rpcHit_layer[rpcHit_n]/S");
+  tree_->Branch("rpcHit_disk", b_rpcHit_disk, "rpcHit_disk[rpcHit_n]/S");
+  tree_->Branch("rpcHit_ring", b_rpcHit_ring, "rpcHit_ring[rpcHit_n]/S");
+  tree_->Branch("rpcHit_x", b_rpcHit_x, "rpcHit_x[rpcHit_n]/D");
+  tree_->Branch("rpcHit_y", b_rpcHit_y, "rpcHit_y[rpcHit_n]/D");
+  tree_->Branch("rpcHit_z", b_rpcHit_z, "rpcHit_z[rpcHit_n]/D");
+  tree_->Branch("rpcHit_time", b_rpcHit_time, "rpcHit_time[rpcHit_n]/D");
+  tree_->Branch("rpcHit_timeErr", b_rpcHit_timeErr, "rpcHit_timeErr[rpcHit_n]/D");
+  tree_->Branch("rpcHit_t0", b_rpcHit_t0, "rpcHit_t0[rpcHit_n]/D");
+  tree_->Branch("rpcHit_lx", b_rpcHit_lx, "rpcHit_lx[rpcHit_n]/D");
+  tree_->Branch("rpcHit_ly", b_rpcHit_ly, "rpcHit_ly[rpcHit_n]/D");
+  tree_->Branch("rpcHit_bx", b_rpcHit_bx, "rpcHit_bx[rpcHit_n]/S");
+
   tree_->Branch("muon_n", &b_muon_n, "muon_n/s");
   tree_->Branch("muon_pt", b_muon_pt, "muon_pt[muon_n]/D");
   tree_->Branch("muon_eta", b_muon_eta, "muon_eta[muon_n]/D");
@@ -255,6 +285,7 @@ double dist(const T1& a, const T2& b)
 void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& eventSetup)
 {
   b_simHit1_n = b_simHit2_n = b_simDigi1_n = b_simDigi2_n = 0;
+  b_rpcHit_n = 0;
   b_muon_n = 0;
 
   edm::Handle<reco::GenParticleCollection> genParticleHandle;
@@ -324,19 +355,19 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
       const int pid = simHit.particleType();
       if ( std::abs(pid) == signalPdgId_ ) continue;
 
-      const RPCDetId detId(simHit.detUnitId());
-      const RPCRoll* roll = rpcGeom->roll(detId);
+      const RPCDetId rpcId(simHit.detUnitId());
+      const RPCRoll* roll = rpcGeom->roll(rpcId);
       const auto simHitGPos = roll->toGlobal(simHit.localPosition());
       //const double r = dist(simPV, simHitGPos);
       //const double r0 = simHitGPos.mag();
       //const double beta = r/simHit.tof()/speedOfLight;
 
       if ( pid == signalPdgId_ and b_simHit1_n < simHit1_N ) {
-        b_simHit1_isBarrel[b_simHit1_n] = (detId.region() == 0);
+        b_simHit1_isBarrel[b_simHit1_n] = (rpcId.region() == 0);
         b_simHit1_isIRPC[b_simHit1_n] = roll->isIRPC();
-        b_simHit1_sector[b_simHit1_n] = detId.sector();
-        b_simHit1_layer[b_simHit1_n] = detId.layer();
-        b_simHit1_roll[b_simHit1_n] = detId.roll();
+        b_simHit1_sector[b_simHit1_n] = rpcId.sector();
+        b_simHit1_layer[b_simHit1_n] = rpcId.layer();
+        b_simHit1_roll[b_simHit1_n] = rpcId.roll();
         b_simHit1_x[b_simHit1_n] = simHitGPos.x();
         b_simHit1_y[b_simHit1_n] = simHitGPos.y();
         b_simHit1_z[b_simHit1_n] = simHitGPos.z();
@@ -344,25 +375,25 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
         b_simHit1_lx[b_simHit1_n] = simHit.localPosition().x();
         b_simHit1_ly[b_simHit1_n] = simHit.localPosition().y();
 
-        if ( detId.region() == 0 ) {
+        if ( rpcId.region() == 0 ) {
           b_simHit1_disk[b_simHit1_n] = b_simHit1_ring[b_simHit1_n] = 0;
-          b_simHit1_wheel[b_simHit1_n] = detId.ring();
-          b_simHit1_station[b_simHit1_n] = detId.station();
+          b_simHit1_wheel[b_simHit1_n] = rpcId.ring();
+          b_simHit1_station[b_simHit1_n] = rpcId.station();
         }
         else {
           b_simHit1_wheel[b_simHit1_n] = b_simHit1_station[b_simHit1_n] = 0;
-          b_simHit1_disk[b_simHit1_n] = detId.region()*detId.station();
-          b_simHit1_ring[b_simHit1_n] = detId.ring();
+          b_simHit1_disk[b_simHit1_n] = rpcId.region()*rpcId.station();
+          b_simHit1_ring[b_simHit1_n] = rpcId.ring();
         }
 
         ++b_simHit1_n;
       }
       else if ( pid == -signalPdgId_ and b_simHit2_n < simHit2_N ) {
-        b_simHit2_isBarrel[b_simHit2_n] = (detId.region() == 0);
+        b_simHit2_isBarrel[b_simHit2_n] = (rpcId.region() == 0);
         b_simHit2_isIRPC[b_simHit2_n] = roll->isIRPC();
-        b_simHit2_sector[b_simHit2_n] = detId.sector();
-        b_simHit2_layer[b_simHit2_n] = detId.layer();
-        b_simHit2_roll[b_simHit2_n] = detId.roll();
+        b_simHit2_sector[b_simHit2_n] = rpcId.sector();
+        b_simHit2_layer[b_simHit2_n] = rpcId.layer();
+        b_simHit2_roll[b_simHit2_n] = rpcId.roll();
         b_simHit2_x[b_simHit2_n] = simHitGPos.x();
         b_simHit2_y[b_simHit2_n] = simHitGPos.y();
         b_simHit2_z[b_simHit2_n] = simHitGPos.z();
@@ -370,15 +401,15 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
         b_simHit2_lx[b_simHit2_n] = simHit.localPosition().x();
         b_simHit2_ly[b_simHit2_n] = simHit.localPosition().y();
 
-        if ( detId.region() == 0 ) {
+        if ( rpcId.region() == 0 ) {
           b_simHit2_disk[b_simHit2_n] = b_simHit2_ring[b_simHit2_n] = 0;
-          b_simHit2_wheel[b_simHit2_n] = detId.ring();
-          b_simHit2_station[b_simHit2_n] = detId.station();
+          b_simHit2_wheel[b_simHit2_n] = rpcId.ring();
+          b_simHit2_station[b_simHit2_n] = rpcId.station();
         }
         else {
           b_simHit2_wheel[b_simHit2_n] = b_simHit2_station[b_simHit2_n] = 0;
-          b_simHit2_disk[b_simHit2_n] = detId.station();
-          b_simHit2_ring[b_simHit2_n] = detId.ring();
+          b_simHit2_disk[b_simHit2_n] = rpcId.station();
+          b_simHit2_ring[b_simHit2_n] = rpcId.ring();
         }
 
         ++b_simHit2_n;
@@ -391,12 +422,12 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
       const unsigned int rawId = detSet.detId();
       if ( DetId(rawId).det() != DetId::Muon or
            DetId(rawId).subdetId() != 3 ) continue;
-    
-      const RPCDetId detId(rawId);
-      const RPCRoll* roll = rpcGeom->roll(detId);
+
+      const RPCDetId rpcId(rawId);
+      const RPCRoll* roll = rpcGeom->roll(rpcId);
       if ( !roll ) continue;
       const double r0 = roll->toGlobal(LocalPoint(0,0,0)).mag();
-      
+
       for ( const auto& simDigi : detSet ) {
         const int pid = simDigi.getParticleType();
         if ( std::abs(pid) != signalPdgId_ ) continue;
@@ -406,11 +437,11 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
         const double tof = simDigi.getTimeOfFlight();
 
         if ( pid == signalPdgId_ and b_simDigi1_n < simDigi1_N ) {
-          b_simDigi1_isBarrel[b_simDigi1_n] = (detId.region() == 0);
+          b_simDigi1_isBarrel[b_simDigi1_n] = (rpcId.region() == 0);
           b_simDigi1_isIRPC[b_simDigi1_n] = roll->isIRPC();
-          b_simDigi1_sector[b_simDigi1_n] = detId.sector();
-          b_simDigi1_layer[b_simDigi1_n] = detId.layer();
-          b_simDigi1_roll[b_simDigi1_n] = detId.roll();
+          b_simDigi1_sector[b_simDigi1_n] = rpcId.sector();
+          b_simDigi1_layer[b_simDigi1_n] = rpcId.layer();
+          b_simDigi1_roll[b_simDigi1_n] = rpcId.roll();
           b_simDigi1_x[b_simDigi1_n] = gp.x();
           b_simDigi1_y[b_simDigi1_n] = gp.y();
           b_simDigi1_z[b_simDigi1_n] = gp.z();
@@ -420,25 +451,25 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
           b_simDigi1_ly[b_simDigi1_n] = lp.y();
           b_simDigi1_bx[b_simDigi1_n] = simDigi.getBx();
 
-          if ( detId.region() == 0 ) {
+          if ( rpcId.region() == 0 ) {
             b_simDigi1_disk[b_simDigi1_n] = b_simDigi1_ring[b_simDigi1_n] = 0;
-            b_simDigi1_wheel[b_simDigi1_n] = detId.ring();
-            b_simDigi1_station[b_simDigi1_n] = detId.station();
+            b_simDigi1_wheel[b_simDigi1_n] = rpcId.ring();
+            b_simDigi1_station[b_simDigi1_n] = rpcId.station();
           }
           else {
             b_simDigi1_wheel[b_simDigi1_n] = b_simDigi1_station[b_simDigi1_n] = 0;
-            b_simDigi1_disk[b_simDigi1_n] = detId.region()*detId.station();
-            b_simDigi1_ring[b_simDigi1_n] = detId.ring();
+            b_simDigi1_disk[b_simDigi1_n] = rpcId.region()*rpcId.station();
+            b_simDigi1_ring[b_simDigi1_n] = rpcId.ring();
           }
 
           ++b_simDigi1_n;
         }
         else if ( pid == -signalPdgId_ and b_simDigi2_n < simDigi2_N ) {
-          b_simDigi2_isBarrel[b_simDigi2_n] = (detId.region() == 0);
+          b_simDigi2_isBarrel[b_simDigi2_n] = (rpcId.region() == 0);
           b_simDigi2_isIRPC[b_simDigi2_n] = roll->isIRPC();
-          b_simDigi2_sector[b_simDigi2_n] = detId.sector();
-          b_simDigi2_layer[b_simDigi2_n] = detId.layer();
-          b_simDigi2_roll[b_simDigi2_n] = detId.roll();
+          b_simDigi2_sector[b_simDigi2_n] = rpcId.sector();
+          b_simDigi2_layer[b_simDigi2_n] = rpcId.layer();
+          b_simDigi2_roll[b_simDigi2_n] = rpcId.roll();
           b_simDigi2_x[b_simDigi2_n] = gp.x();
           b_simDigi2_y[b_simDigi2_n] = gp.y();
           b_simDigi2_z[b_simDigi2_n] = gp.z();
@@ -448,15 +479,15 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
           b_simDigi2_ly[b_simDigi2_n] = lp.y();
           b_simDigi2_bx[b_simDigi2_n] = simDigi.getBx();
 
-          if ( detId.region() == 0 ) {
+          if ( rpcId.region() == 0 ) {
             b_simDigi2_disk[b_simDigi2_n] = b_simDigi2_ring[b_simDigi2_n] = 0;
-            b_simDigi2_wheel[b_simDigi2_n] = detId.ring();
-            b_simDigi2_station[b_simDigi2_n] = detId.station();
+            b_simDigi2_wheel[b_simDigi2_n] = rpcId.ring();
+            b_simDigi2_station[b_simDigi2_n] = rpcId.station();
           }
           else {
             b_simDigi2_wheel[b_simDigi2_n] = b_simDigi2_station[b_simDigi2_n] = 0;
-            b_simDigi2_disk[b_simDigi2_n] = detId.region()*detId.station();
-            b_simDigi2_ring[b_simDigi2_n] = detId.ring();
+            b_simDigi2_disk[b_simDigi2_n] = rpcId.region()*rpcId.station();
+            b_simDigi2_ring[b_simDigi2_n] = rpcId.ring();
           }
 
           ++b_simDigi2_n;
@@ -503,6 +534,41 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
       }
 
       if ( ++b_muon_n >= muon_N ) break;
+    }
+  }
+
+  if ( rpcRecHitsHandle.isValid() ) {
+    for ( auto& rpcHit : *rpcRecHitsHandle ) {
+      const RPCDetId rpcId = rpcHit.rpcId();
+      const RPCRoll* roll = rpcGeom->roll(rpcId);
+      const auto gp = roll->toGlobal(rpcHit.localPosition());
+
+      b_rpcHit_isBarrel[b_rpcHit_n] = (rpcId.region() == 0);
+      b_rpcHit_isIRPC[b_rpcHit_n] = roll->isIRPC();
+      b_rpcHit_sector[b_rpcHit_n] = rpcId.sector();
+      b_rpcHit_layer[b_rpcHit_n] = rpcId.layer();
+      b_rpcHit_roll[b_rpcHit_n] = rpcId.roll();
+      b_rpcHit_x[b_rpcHit_n] = gp.x();
+      b_rpcHit_y[b_rpcHit_n] = gp.y();
+      b_rpcHit_z[b_rpcHit_n] = gp.z();
+      b_rpcHit_time[b_rpcHit_n] = rpcHit.time();
+      b_rpcHit_timeErr[b_rpcHit_n] = rpcHit.timeError();
+      b_rpcHit_lx[b_rpcHit_n] = rpcHit.localPosition().x();
+      b_rpcHit_ly[b_rpcHit_n] = rpcHit.localPosition().y();
+      b_rpcHit_bx[b_rpcHit_n] = rpcHit.BunchX();
+
+      if ( rpcId.region() == 0 ) {
+        b_rpcHit_disk[b_rpcHit_n] = b_rpcHit_ring[b_rpcHit_n] = 0;
+        b_rpcHit_wheel[b_rpcHit_n] = rpcId.ring();
+        b_rpcHit_station[b_rpcHit_n] = rpcId.station();
+      }
+      else {
+        b_rpcHit_wheel[b_rpcHit_n] = b_rpcHit_station[b_rpcHit_n] = 0;
+        b_rpcHit_disk[b_rpcHit_n] = rpcId.region()*rpcId.station();
+        b_rpcHit_ring[b_rpcHit_n] = rpcId.ring();
+      }
+
+      if ( ++b_rpcHit_n >= rpcHit_N ) break;
     }
   }
 
