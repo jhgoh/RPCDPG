@@ -341,7 +341,7 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
     b_gen1_eta = p.eta();
     b_gen1_phi = p.phi();
     b_gen1_m = p.mass();
-    b_gen1_beta = 1/hypot(1, p.p()/p.mass());
+    b_gen1_beta = 1/hypot(1, p.mass()/p.p());
   }
   if ( genParticle2 ) {
     const auto& p = *genParticle2;
@@ -350,7 +350,7 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
     b_gen2_eta = p.eta();
     b_gen2_phi = p.phi();
     b_gen2_m = p.mass();
-    b_gen2_beta = 1/hypot(1, p.p()/p.mass());
+    b_gen2_beta = 1/hypot(1, p.mass()/p.p());
   }
 
   if ( rpcSimHitsHandle.isValid() ) {
