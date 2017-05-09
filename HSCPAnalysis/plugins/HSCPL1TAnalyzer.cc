@@ -288,8 +288,8 @@ void HSCPL1TAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
   b_rpcHit_n = 0;
   b_muon_n = 0;
 
-  b_gen1_pdgId = b_gen1_pt = b_gen1_eta = b_gen1_phi = b_gen1_phi = b_gen1_m = b_gen1_beta = 0;
-  b_gen2_pdgId = b_gen2_pt = b_gen2_eta = b_gen2_phi = b_gen2_phi = b_gen2_m = b_gen2_beta = 0;
+  b_gen1_pdgId = b_gen1_pt = b_gen1_eta = b_gen1_phi = b_gen1_m = b_gen1_beta = 0;
+  b_gen2_pdgId = b_gen2_pt = b_gen2_eta = b_gen2_phi = b_gen2_m = b_gen2_beta = 0;
 
   edm::Handle<reco::GenParticleCollection> genParticleHandle;
   event.getByToken(genParticleToken_, genParticleHandle);
