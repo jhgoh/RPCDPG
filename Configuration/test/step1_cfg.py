@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: ZMM_13TeV_TuneCUETP8M1_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D12 --fileout file:step1.root --no_exec --python_filename step1_cfg.py
+# with command line options: ZMM_14TeV_TuneCUETP8M1_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D12 --fileout file:step1.root --no_exec --python_filename step1_cfg.py
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -38,7 +38,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('ZMM_13TeV_TuneCUETP8M1_cfi nevts:1000'),
+    annotation = cms.untracked.string('ZMM_14TeV_TuneCUETP8M1_cfi nevts:1000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -90,7 +90,7 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
             'ParticleDecays:tau0Max = 10', 
             'ParticleDecays:allowPhotonRadiation = on')
     ),
-    comEnergy = cms.double(13000.0),
+    comEnergy = cms.double(14000.0),
     filterEfficiency = cms.untracked.double(1.0),
     maxEventsToPrint = cms.untracked.int32(0),
     pythiaHepMCVerbosity = cms.untracked.bool(False),
@@ -99,8 +99,8 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
 
 
 process.mumugenfilter = cms.EDFilter("MCParticlePairFilter",
-    MaxEta = cms.untracked.vdouble(2.5, 2.5),
-    MinEta = cms.untracked.vdouble(-2.5, -2.5),
+    MaxEta = cms.untracked.vdouble(4.0, 4.0),
+    MinEta = cms.untracked.vdouble(-4.0, -4.0),
     MinPt = cms.untracked.vdouble(2.5, 2.5),
     ParticleCharge = cms.untracked.int32(-1),
     ParticleID1 = cms.untracked.vint32(13),
