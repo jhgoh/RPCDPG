@@ -31,13 +31,13 @@ process.source.fileNames = [
 "root://cmsxrootd.fnal.gov///store/mc/PhaseIIFall16DR82/HSCPppstau_M_1218_TuneCUETP8M1_14TeV_pythia8/GEN-SIM-RECO/NoPU_90X_upgrade2023_realistic_v1-v2/90000/E4AD50CD-C3FD-E611-A9FE-02163E01A312.root",
 ]
 
-process.load("RPCUpgrade.HSCPAnalysis.HSCPL1TAnalysis_cff")
-process.HSCPL1TAnalyzer.rpcDigis = "simMuonRPCDigis"
+process.load("RPCUpgrade.HSCPAnalysis.HSCPTreeMaker_cff")
+process.HSCPTree.rpcDigis = "simMuonRPCDigis"
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string("hist.root"),
 )
 
 process.p = cms.Path(
-    process.HSCPL1TAnalyzer
+    process.HSCPTree
 )
 

@@ -1,7 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
-HSCPL1TAnalyzer = cms.EDAnalyzer("HSCPL1TAnalyzer",
+HSCPTree = cms.EDAnalyzer("HSCPTreeMaker",
     genParticle = cms.InputTag("genParticles"),
+    doSimHit = cms.bool(False),
     simVertex = cms.InputTag("g4SimHits"),
     rpcSimHits = cms.InputTag("g4SimHits:MuonRPCHits"),
     rpcDigis = cms.InputTag("rpcDigis"),
@@ -11,5 +12,6 @@ HSCPL1TAnalyzer = cms.EDAnalyzer("HSCPL1TAnalyzer",
     signalPropagationSpeed = cms.double(0.66), ## To be overridden by SimMuon.RPCDigitizer.muonRPCDigis_cfi.simMuonRPCDigis, this may depend on eras
     #signalPdgId = cms.uint32(13),
     signalPdgId = cms.uint32(1000015),
+    doSimDigi = cms.bool(True),
     rpcSimDigis = cms.InputTag("simMuonRPCDigis:RPCDigiSimLink"),
 )
