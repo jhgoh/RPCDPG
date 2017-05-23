@@ -83,8 +83,8 @@ for l in lines_gen1_eta_gen2_eta:
 save(c_gen1_eta_gen2_eta)
 
 ### gen1 and gen2 beta plots
-h_gen1_beta = TH1D("h_gen1_beta", "gen1_beta;#tilde{#tau}^{-} #beta;Events / 0.2", 50, 0, 1)
-h_gen2_beta = TH1D("h_gen2_beta", "gen2_beta;#tilde{#tau}^{+} #beta;Events / 0.2", 50, 0, 1)
+h_gen1_beta = TH1D("h_gen1_beta", "gen1_beta;#tilde{#tau}^{-} #beta;Events / 0.02", 50, 0, 1)
+h_gen2_beta = TH1D("h_gen2_beta", "gen2_beta;#tilde{#tau}^{+} #beta;Events / 0.02", 50, 0, 1)
 h_gen1_beta_gen2_beta = TH2D("h_gen1_beta_gen2_beta", "gen1_beta_gen2_beta;#tilde{#tau}^{-} #beta;#tilde{#tau}^{+} #beta", 50, 0, 1, 50, 0, 1)
 
 tree.Draw("gen1_beta>>h_gen1_beta", buildCut(""), "goff")
@@ -109,12 +109,12 @@ h_gen1_beta_gen2_beta.Draw("COLZ")
 save(c_gen1_beta_gen2_beta)
 
 ### gen1 and gen2 beta by regions
-h_gen1_beta_iRPC = TH1D("h_gen1_beta_iRPC", "gen1_beta_iRPC;#tilde{#tau}^{-} #beta_iRPC;Events / 0.2", 50, 0, 1)
-h_gen2_beta_iRPC = TH1D("h_gen2_beta_iRPC", "gen2_beta_iRPC;#tilde{#tau}^{+} #beta_iRPC;Events / 0.2", 50, 0, 1)
-h_gen1_beta_cRPC = TH1D("h_gen1_beta_cRPC", "gen1_beta_cRPC;#tilde{#tau}^{-} #beta_cRPC;Events / 0.2", 50, 0, 1)
-h_gen2_beta_cRPC = TH1D("h_gen2_beta_cRPC", "gen2_beta_cRPC;#tilde{#tau}^{+} #beta_cRPC;Events / 0.2", 50, 0, 1)
-h_gen1_beta_nRPC = TH1D("h_gen1_beta_nRPC", "gen1_beta_nRPC;#tilde{#tau}^{-} #beta_cRPC;Events / 0.2", 50, 0, 1)
-h_gen2_beta_nRPC = TH1D("h_gen2_beta_nRPC", "gen2_beta_nRPC;#tilde{#tau}^{+} #beta_cRPC;Events / 0.2", 50, 0, 1)
+h_gen1_beta_iRPC = TH1D("h_gen1_beta_iRPC", "gen1_beta_iRPC;#tilde{#tau}^{-} #beta_iRPC;Events / 0.02", 50, 0, 1)
+h_gen2_beta_iRPC = TH1D("h_gen2_beta_iRPC", "gen2_beta_iRPC;#tilde{#tau}^{+} #beta_iRPC;Events / 0.02", 50, 0, 1)
+h_gen1_beta_cRPC = TH1D("h_gen1_beta_cRPC", "gen1_beta_cRPC;#tilde{#tau}^{-} #beta_cRPC;Events / 0.02", 50, 0, 1)
+h_gen2_beta_cRPC = TH1D("h_gen2_beta_cRPC", "gen2_beta_cRPC;#tilde{#tau}^{+} #beta_cRPC;Events / 0.02", 50, 0, 1)
+h_gen1_beta_nRPC = TH1D("h_gen1_beta_nRPC", "gen1_beta_nRPC;#tilde{#tau}^{-} #beta_cRPC;Events / 0.02", 50, 0, 1)
+h_gen2_beta_nRPC = TH1D("h_gen2_beta_nRPC", "gen2_beta_nRPC;#tilde{#tau}^{+} #beta_cRPC;Events / 0.02", 50, 0, 1)
 
 tree.Draw("gen1_beta>>h_gen1_beta_iRPC", buildCut("abs(gen1_eta)>=1.8 && abs(gen1_eta)<2.4"), "goff")
 tree.Draw("gen2_beta>>h_gen2_beta_iRPC", buildCut("abs(gen2_eta)>=1.8 && abs(gen2_eta)<2.4"), "goff")
@@ -160,7 +160,7 @@ leg_gen1_beta_ciRPC_norm = leg_gen1_beta_ciRPC.Clone()
 leg_gen2_beta_ciRPC_norm = leg_gen1_beta_ciRPC.Clone()
 
 c_gen1_beta_ciRPC = TCanvas("c_gen1_beta_ciRPC", "gen1_beta_ciRPC", 500, 500)
-hs_gen1_beta_ciRPC = THStack("hs_gen1_beta_ciRPC", "hs_gen1_beta_ciRPC;#tilde{#tau}^{-} #beta;Events / 0.2")
+hs_gen1_beta_ciRPC = THStack("hs_gen1_beta_ciRPC", "hs_gen1_beta_ciRPC;#tilde{#tau}^{-} #beta;Events / 0.02")
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_nRPC)
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_iRPC)
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_cRPC)
@@ -172,7 +172,7 @@ leg_gen1_beta_ciRPC.Draw()
 save(c_gen1_beta_ciRPC)
 
 c_gen2_beta_ciRPC = TCanvas("c_gen2_beta_ciRPC", "gen2_beta_ciRPC", 500, 500)
-hs_gen2_beta_ciRPC = THStack("hs_gen2_beta_ciRPC", "hs_gen2_beta_ciRPC;#tilde{#tau}^{+} #beta;Events / 0.2")
+hs_gen2_beta_ciRPC = THStack("hs_gen2_beta_ciRPC", "hs_gen2_beta_ciRPC;#tilde{#tau}^{+} #beta;Events / 0.02")
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_nRPC)
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_iRPC)
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_cRPC)
