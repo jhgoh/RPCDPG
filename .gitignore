@@ -8,3 +8,6 @@ core*
 *.pdf
 *.txt
 *.log
+*.so
+*.d
+*.pcm
