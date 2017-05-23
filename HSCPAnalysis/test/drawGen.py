@@ -29,7 +29,7 @@ h_regions = TH1D("h_regions", "regions;;Events", 3, 0, 3)
 h_regions.GetXaxis().SetBinLabel(1, "C+C")
 h_regions.GetXaxis().SetBinLabel(2, "C+I")
 h_regions.GetXaxis().SetBinLabel(3, "I+I")
-tree.Draw("(abs(gen1_eta)>=2.1)+(abs(gen2_eta)>=2.1)>>h_regions", buildCut("abs(gen1_eta)<2.4 && abs(gen2_eta)<2.4"), "goff")
+tree.Draw("(abs(gen1_eta)>=1.8)+(abs(gen2_eta)>=1.8)>>h_regions", buildCut("abs(gen1_eta)<2.4 && abs(gen2_eta)<2.4"), "goff")
 normalize(h_regions)
 
 c_regions = TCanvas("c_regions", "c_regions", 500, 500)
@@ -54,7 +54,7 @@ h_gen2_eta.SetMaximum(h_gen1_eta.GetMaximum())
 c_gen1_eta = TCanvas("c_gen1_eta", "gen1_eta", 500, 500)
 lines_gen1_eta = [
     TLine(-2.4,0,-2.4,h_gen1_eta.GetMaximum()), TLine(2.4,0,2.4,h_gen1_eta.GetMaximum()),
-    TLine(-2.1,0,-2.1,h_gen1_eta.GetMaximum()), TLine(2.1,0,2.1,h_gen1_eta.GetMaximum()),
+    TLine(-1.8,0,-1.8,h_gen1_eta.GetMaximum()), TLine(1.8,0,1.8,h_gen1_eta.GetMaximum()),
 ]
 h_gen1_eta.Draw()
 for l in lines_gen1_eta:
@@ -74,7 +74,7 @@ save(c_gen2_eta)
 c_gen1_eta_gen2_eta = TCanvas("c_gen1_eta_gen2_eta", "gen1_eta_gen2_eta", 500, 500)
 lines_gen1_eta_gen2_eta = [
     TLine(-2.4,-3,-2.4,3), TLine(2.4,-3,2.4,3), TLine(-3,-2.4,3,-2.4), TLine(-3,2.4,3,2.4),
-    TLine(-2.1,-3,-2.1,3), TLine(2.1,-3,2.1,3), TLine(-3,-2.1,3,-2.1), TLine(-3,2.1,3,2.1),
+    TLine(-1.8,-3,-1.8,3), TLine(1.8,-3,1.8,3), TLine(-3,-1.8,3,-1.8), TLine(-3,1.8,3,1.8),
 ]
 h_gen1_eta_gen2_eta.Draw("COLZ")
 for l in lines_gen1_eta_gen2_eta:
@@ -116,10 +116,10 @@ h_gen2_beta_cRPC = TH1D("h_gen2_beta_cRPC", "gen2_beta_cRPC;#tilde{#tau}^{+} #be
 h_gen1_beta_nRPC = TH1D("h_gen1_beta_nRPC", "gen1_beta_nRPC;#tilde{#tau}^{-} #beta_cRPC;Events / 0.2", 50, 0, 1)
 h_gen2_beta_nRPC = TH1D("h_gen2_beta_nRPC", "gen2_beta_nRPC;#tilde{#tau}^{+} #beta_cRPC;Events / 0.2", 50, 0, 1)
 
-tree.Draw("gen1_beta>>h_gen1_beta_iRPC", buildCut("abs(gen1_eta)>=2.1 && abs(gen1_eta)<2.4"), "goff")
-tree.Draw("gen2_beta>>h_gen2_beta_iRPC", buildCut("abs(gen2_eta)>=2.1 && abs(gen2_eta)<2.4"), "goff")
-tree.Draw("gen1_beta>>h_gen1_beta_cRPC", buildCut("abs(gen1_eta)<2.1"), "goff")
-tree.Draw("gen2_beta>>h_gen2_beta_cRPC", buildCut("abs(gen2_eta)<2.1"), "goff")
+tree.Draw("gen1_beta>>h_gen1_beta_iRPC", buildCut("abs(gen1_eta)>=1.8 && abs(gen1_eta)<2.4"), "goff")
+tree.Draw("gen2_beta>>h_gen2_beta_iRPC", buildCut("abs(gen2_eta)>=1.8 && abs(gen2_eta)<2.4"), "goff")
+tree.Draw("gen1_beta>>h_gen1_beta_cRPC", buildCut("abs(gen1_eta)<1.8"), "goff")
+tree.Draw("gen2_beta>>h_gen2_beta_cRPC", buildCut("abs(gen2_eta)<1.8"), "goff")
 tree.Draw("gen1_beta>>h_gen1_beta_nRPC", buildCut("abs(gen1_eta)>=2.4"), "goff")
 tree.Draw("gen2_beta>>h_gen2_beta_nRPC", buildCut("abs(gen2_eta)>=2.4"), "goff")
 
@@ -164,8 +164,8 @@ hs_gen1_beta_ciRPC = THStack("hs_gen1_beta_ciRPC", "hs_gen1_beta_ciRPC;#tilde{#t
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_nRPC)
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_iRPC)
 hs_gen1_beta_ciRPC.Add(h_gen1_beta_cRPC)
-leg_gen1_beta_ciRPC.AddEntry(h_gen1_beta_cRPC, "|#eta|<2.1", "f")
-leg_gen1_beta_ciRPC.AddEntry(h_gen1_beta_iRPC, "2.1#leq|#eta|<2.4", "f")
+leg_gen1_beta_ciRPC.AddEntry(h_gen1_beta_cRPC, "|#eta|<1.8", "f")
+leg_gen1_beta_ciRPC.AddEntry(h_gen1_beta_iRPC, "1.8#leq|#eta|<2.4", "f")
 leg_gen1_beta_ciRPC.AddEntry(h_gen1_beta_nRPC, "|#eta|>2.4", "f")
 hs_gen1_beta_ciRPC.Draw()
 leg_gen1_beta_ciRPC.Draw()
@@ -176,8 +176,8 @@ hs_gen2_beta_ciRPC = THStack("hs_gen2_beta_ciRPC", "hs_gen2_beta_ciRPC;#tilde{#t
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_nRPC)
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_iRPC)
 hs_gen2_beta_ciRPC.Add(h_gen2_beta_cRPC)
-leg_gen2_beta_ciRPC.AddEntry(h_gen2_beta_cRPC, "|#eta|<2.1", "f")
-leg_gen2_beta_ciRPC.AddEntry(h_gen2_beta_iRPC, "2.1#leq|#eta|<2.4", "f")
+leg_gen2_beta_ciRPC.AddEntry(h_gen2_beta_cRPC, "|#eta|<1.8", "f")
+leg_gen2_beta_ciRPC.AddEntry(h_gen2_beta_iRPC, "1.8#leq|#eta|<2.4", "f")
 leg_gen2_beta_ciRPC.AddEntry(h_gen2_beta_nRPC, "|#eta|>2.4", "f")
 hs_gen2_beta_ciRPC.Draw()
 leg_gen2_beta_ciRPC.Draw()
@@ -188,8 +188,8 @@ hs_gen1_beta_ciRPC_norm = THStack("hs_gen1_beta_ciRPC_norm", "hs_gen1_beta_ciRPC
 hs_gen1_beta_ciRPC_norm.Add(h_gen1_beta_nRPC_norm)
 hs_gen1_beta_ciRPC_norm.Add(h_gen1_beta_iRPC_norm)
 hs_gen1_beta_ciRPC_norm.Add(h_gen1_beta_cRPC_norm)
-leg_gen1_beta_ciRPC_norm.AddEntry(h_gen1_beta_cRPC_norm, "|#eta|<2.1", "l")
-leg_gen1_beta_ciRPC_norm.AddEntry(h_gen1_beta_iRPC_norm, "2.1#leq|#eta|<2.4", "l")
+leg_gen1_beta_ciRPC_norm.AddEntry(h_gen1_beta_cRPC_norm, "|#eta|<1.8", "l")
+leg_gen1_beta_ciRPC_norm.AddEntry(h_gen1_beta_iRPC_norm, "1.8#leq|#eta|<2.4", "l")
 leg_gen1_beta_ciRPC_norm.AddEntry(h_gen1_beta_nRPC_norm, "|#eta|>2.4", "l")
 hs_gen1_beta_ciRPC_norm.Draw("nostackhist")
 leg_gen1_beta_ciRPC_norm.Draw()
@@ -200,8 +200,8 @@ hs_gen2_beta_ciRPC_norm = THStack("hs_gen2_beta_ciRPC_norm", "hs_gen2_beta_ciRPC
 hs_gen2_beta_ciRPC_norm.Add(h_gen2_beta_nRPC_norm)
 hs_gen2_beta_ciRPC_norm.Add(h_gen2_beta_iRPC_norm)
 hs_gen2_beta_ciRPC_norm.Add(h_gen2_beta_cRPC_norm)
-leg_gen2_beta_ciRPC_norm.AddEntry(h_gen2_beta_cRPC_norm, "|#eta|<2.1", "l")
-leg_gen2_beta_ciRPC_norm.AddEntry(h_gen2_beta_iRPC_norm, "2.1#leq|#eta|<2.4", "l")
+leg_gen2_beta_ciRPC_norm.AddEntry(h_gen2_beta_cRPC_norm, "|#eta|<1.8", "l")
+leg_gen2_beta_ciRPC_norm.AddEntry(h_gen2_beta_iRPC_norm, "1.8#leq|#eta|<2.4", "l")
 leg_gen2_beta_ciRPC_norm.AddEntry(h_gen2_beta_nRPC_norm, "|#eta|>2.4", "l")
 hs_gen2_beta_ciRPC_norm.Draw("nostackhist")
 leg_gen2_beta_ciRPC_norm.Draw()
