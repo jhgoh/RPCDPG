@@ -46,6 +46,8 @@
 
 using namespace std;
 
+typedef std::pair<std::array<double, 3>, int> HitInfo;
+
 class HSCPTreeMaker : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
 public:
@@ -53,9 +55,9 @@ public:
   ~HSCPTreeMaker() {};
 
   void analyze(const edm::Event& event, const edm::EventSetup& eventSetup) override;
-  std::vector<std::pair<double, int>> getRPCTimes(const reco::Muon& mu,
-                                                  const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom,
-                                                  const bool doOnlyWithTime) const;
+  std::vector<HitInfo> getRPCTimes(const reco::Muon& mu,
+                                   const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom,
+                                   const bool doOnlyWithTime) const;
 
 private:
   const double speedOfLight_;
@@ -131,7 +133,7 @@ private:
   short b_rpcHit_wheel[rpcHit_N], b_rpcHit_layer[rpcHit_N];
   short b_rpcHit_disk[rpcHit_N], b_rpcHit_ring[rpcHit_N];
   double b_rpcHit_x[rpcHit_N], b_rpcHit_y[rpcHit_N], b_rpcHit_z[rpcHit_N];
-  double b_rpcHit_time[rpcHit_N], b_rpcHit_timeErr[rpcHit_N], b_rpcHit_t0[rpcHit_N];
+  double b_rpcHit_time[rpcHit_N], b_rpcHit_timeErr[rpcHit_N];
   double b_rpcHit_lx[rpcHit_N], b_rpcHit_ly[rpcHit_N];
   short b_rpcHit_bx[rpcHit_N];
 
@@ -140,6 +142,7 @@ private:
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
   bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N];
   double b_muon_time[muon_N], b_muon_RPCTime[muon_N], b_muon_RPCTimeNew[muon_N];
+  double b_muon_RPCBeta[muon_N];
   unsigned short b_muon_nRPC[muon_N], b_muon_nIRPC[muon_N];
   double b_muon_genDR[muon_N];
   short b_muon_genPdgId[muon_N];
@@ -266,7 +269,6 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("rpcHit_z", b_rpcHit_z, "rpcHit_z[rpcHit_n]/D");
   tree_->Branch("rpcHit_time", b_rpcHit_time, "rpcHit_time[rpcHit_n]/D");
   tree_->Branch("rpcHit_timeErr", b_rpcHit_timeErr, "rpcHit_timeErr[rpcHit_n]/D");
-  tree_->Branch("rpcHit_t0", b_rpcHit_t0, "rpcHit_t0[rpcHit_n]/D");
   tree_->Branch("rpcHit_lx", b_rpcHit_lx, "rpcHit_lx[rpcHit_n]/D");
   tree_->Branch("rpcHit_ly", b_rpcHit_ly, "rpcHit_ly[rpcHit_n]/D");
   tree_->Branch("rpcHit_bx", b_rpcHit_bx, "rpcHit_bx[rpcHit_n]/S");
@@ -280,6 +282,7 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("muon_time", b_muon_time, "muon_time[muon_n]/D");
   tree_->Branch("muon_RPCTime", b_muon_RPCTime, "muon_RPCTime[muon_n]/D");
   tree_->Branch("muon_RPCTimeNew", b_muon_RPCTimeNew, "muon_RPCTimeNew[muon_n]/D");
+  tree_->Branch("muon_RPCBeta", b_muon_RPCBeta, "muon_RPCBeta[muon_n]/D");
   tree_->Branch("muon_nRPC", b_muon_nRPC, "muon_nRPC[muon_n]/s");
   tree_->Branch("muon_nIRPC", b_muon_nIRPC, "muon_nIRPC[muon_n]/s");
   tree_->Branch("muon_genDR", b_muon_genDR, "muon_genDR[muon_n]/D");
@@ -537,11 +540,20 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
       b_muon_RPCTime[b_muon_n] = mu.rpcTime().timeAtIpInOut;
 
-      const std::vector<std::pair<double, int>> hitTimes = getRPCTimes(mu, *rpcRecHitsHandle, rpcGeom, true);
-      const double sumTime = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0, [](const double& a, const std::pair<double, int>& b){return a+b.first;});
+      const std::vector<HitInfo> hitTimes = getRPCTimes(mu, *rpcRecHitsHandle, rpcGeom, true);
+      const double sumTime = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0, [](const double& a, const HitInfo& b){return a+b.first[0];});
       b_muon_RPCTimeNew[b_muon_n] = hitTimes.empty() ? 0 : sumTime/hitTimes.size();
       b_muon_nRPC[b_muon_n] = hitTimes.size();
-      b_muon_nIRPC[b_muon_n] = std::count_if(hitTimes.begin(), hitTimes.end(), [](const std::pair<double, int>& p){return p.second == 2;});
+      b_muon_nIRPC[b_muon_n] = std::count_if(hitTimes.begin(), hitTimes.end(), [](const HitInfo& p){return p.second == 2;});
+      const double sumBeta = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0, [&](const double& sum, const HitInfo& p){
+        if ( p.second == 0 ) return sum;
+        const double t = p.first[0];
+        const double r = p.first[1];
+        const double r0 = p.first[2];
+        const double beta = r/(r0+speedOfLight_*t);
+        return sum+beta;
+      });
+      b_muon_RPCBeta[b_muon_n] = hitTimes.empty() ? 0 : sumBeta/hitTimes.size();
 
       const double dR1 = !genParticle1 ? 999 : deltaR(mu, *genParticle1);
       const double dR2 = !genParticle2 ? 999 : deltaR(mu, *genParticle2);
@@ -596,11 +608,11 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   tree_->Fill();
 }
 
-std::vector<std::pair<double, int>> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu, 
-                                                               const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom,
-                                                               const bool doOnlyWithTime) const
+std::vector<HitInfo> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu, 
+                                                const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom,
+                                                const bool doOnlyWithTime) const
 {
-  std::vector<std::pair<double, int>> hitTimes;
+  std::vector<HitInfo> hitTimes;
 
   reco::TrackRef trackRef;
   if ( mu.isGlobalMuon() ) trackRef = mu.globalTrack();
@@ -614,6 +626,7 @@ std::vector<std::pair<double, int>> HSCPTreeMaker::getRPCTimes(const reco::Muon&
 
     const RPCDetId detId((*ihit)->rawId());
     const RPCRoll* roll = rpcGeom->roll(detId);
+    const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
 
     const auto hitRange = rpcHits.get(detId);
     for ( auto rpcHit = hitRange.first; rpcHit != hitRange.second; ++rpcHit ) {
@@ -622,7 +635,9 @@ std::vector<std::pair<double, int>> HSCPTreeMaker::getRPCTimes(const reco::Muon&
       if ( doOnlyWithTime and detType == 0 ) continue; 
 
       const double time = detType != 0 ? rpcHit->time() : 25.*rpcHit->BunchX();
-      hitTimes.emplace_back(time, detType);
+      const double r = roll->toGlobal(rpcHit->localPosition()).mag();
+      std::array<double, 3> hitRT = {{time, r, r0}};
+      hitTimes.emplace_back(hitRT, detType);
     }
   }
 
