@@ -79,9 +79,9 @@ private:
 
   TTree* tree_;
 
-  short b_gen1_pdgId;
+  int b_gen1_pdgId;
   double b_gen1_pt, b_gen1_eta, b_gen1_phi, b_gen1_m, b_gen1_beta;
-  short b_gen2_pdgId;
+  int b_gen2_pdgId;
   double b_gen2_pt, b_gen2_eta, b_gen2_phi, b_gen2_m, b_gen2_beta;
 
   const static unsigned short simHit1_N = 1000;
@@ -169,14 +169,14 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
 
   tree_ = fs->make<TTree>("tree", "tree");
 
-  tree_->Branch("gen1_pdgId", &b_gen1_pdgId, "gen1_pdgId/S");
+  tree_->Branch("gen1_pdgId", &b_gen1_pdgId, "gen1_pdgId/I");
   tree_->Branch("gen1_pt", &b_gen1_pt, "gen1_pt/D");
   tree_->Branch("gen1_eta", &b_gen1_eta, "gen1_eta/D");
   tree_->Branch("gen1_phi", &b_gen1_phi, "gen1_phi/D");
   tree_->Branch("gen1_m", &b_gen1_m, "gen1_m/D");
   tree_->Branch("gen1_beta", &b_gen1_beta, "gen1_beta/D");
 
-  tree_->Branch("gen2_pdgId", &b_gen2_pdgId, "gen2_pdgId/S");
+  tree_->Branch("gen2_pdgId", &b_gen2_pdgId, "gen2_pdgId/I");
   tree_->Branch("gen2_pt", &b_gen2_pt, "gen2_pt/D");
   tree_->Branch("gen2_eta", &b_gen2_eta, "gen2_eta/D");
   tree_->Branch("gen2_phi", &b_gen2_phi, "gen2_phi/D");
