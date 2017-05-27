@@ -69,36 +69,36 @@ class GenAnalysis {
     Double_t        simDigi2_ly[1000];   //[simDigi2_n]
     Short_t         simDigi2_bx[1000];   //[simDigi2_n]
     UShort_t        rpcHit_n;
-    Bool_t          rpcHit_isBarrel[37];   //[rpcHit_n]
-    Bool_t          rpcHit_isIRPC[37];   //[rpcHit_n]
-    Short_t         rpcHit_sector[37];   //[rpcHit_n]
-    Short_t         rpcHit_station[37];   //[rpcHit_n]
-    Short_t         rpcHit_wheel[37];   //[rpcHit_n]
-    Short_t         rpcHit_layer[37];   //[rpcHit_n]
-    Short_t         rpcHit_disk[37];   //[rpcHit_n]
-    Short_t         rpcHit_ring[37];   //[rpcHit_n]
-    Double_t        rpcHit_x[37];   //[rpcHit_n]
-    Double_t        rpcHit_y[37];   //[rpcHit_n]
-    Double_t        rpcHit_z[37];   //[rpcHit_n]
-    Double_t        rpcHit_time[37];   //[rpcHit_n]
-    Double_t        rpcHit_timeErr[37];   //[rpcHit_n]
-    Double_t        rpcHit_t0[37];   //[rpcHit_n]
-    Double_t        rpcHit_lx[37];   //[rpcHit_n]
-    Double_t        rpcHit_ly[37];   //[rpcHit_n]
-    Short_t         rpcHit_bx[37];   //[rpcHit_n]
+    Bool_t          rpcHit_isBarrel[1000];   //[rpcHit_n]
+    Bool_t          rpcHit_isIRPC[1000];   //[rpcHit_n]
+    Short_t         rpcHit_sector[1000];   //[rpcHit_n]
+    Short_t         rpcHit_station[1000];   //[rpcHit_n]
+    Short_t         rpcHit_wheel[1000];   //[rpcHit_n]
+    Short_t         rpcHit_layer[1000];   //[rpcHit_n]
+    Short_t         rpcHit_disk[1000];   //[rpcHit_n]
+    Short_t         rpcHit_ring[1000];   //[rpcHit_n]
+    Double_t        rpcHit_x[1000];   //[rpcHit_n]
+    Double_t        rpcHit_y[1000];   //[rpcHit_n]
+    Double_t        rpcHit_z[1000];   //[rpcHit_n]
+    Double_t        rpcHit_time[1000];   //[rpcHit_n]
+    Double_t        rpcHit_timeErr[1000];   //[rpcHit_n]
+    Double_t        rpcHit_lx[1000];   //[rpcHit_n]
+    Double_t        rpcHit_ly[1000];   //[rpcHit_n]
+    Short_t         rpcHit_bx[1000];   //[rpcHit_n]
     UShort_t        muon_n;
-    Double_t        muon_pt[5];   //[muon_n]
-    Double_t        muon_eta[5];   //[muon_n]
-    Double_t        muon_phi[5];   //[muon_n]
-    Bool_t          muon_isLoose[5];   //[muon_n]
-    Bool_t          muon_isTight[5];   //[muon_n]
-    Double_t        muon_time[5];   //[muon_n]
-    Double_t        muon_RPCTime[5];   //[muon_n]
-    Double_t        muon_RPCTimeNew[5];   //[muon_n]
-    UShort_t        muon_nRPC[5];   //[muon_n]
-    UShort_t        muon_nIRPC[5];   //[muon_n]
-    Double_t        muon_genDR[5];   //[muon_n]
-    Short_t         muon_genPdgId[5];   //[muon_n]
+    Double_t        muon_pt[100];   //[muon_n]
+    Double_t        muon_eta[100];   //[muon_n]
+    Double_t        muon_phi[100];   //[muon_n]
+    Bool_t          muon_isLoose[100];   //[muon_n]
+    Bool_t          muon_isTight[100];   //[muon_n]
+    Double_t        muon_time[100];   //[muon_n]
+    Double_t        muon_RPCTime[100];   //[muon_n]
+    Double_t        muon_RPCTimeNew[100];   //[muon_n]
+    Double_t        muon_RPCBeta[100];   //[muon_n]
+    UShort_t        muon_nRPC[100];   //[muon_n]
+    UShort_t        muon_nIRPC[100];   //[muon_n]
+    Double_t        muon_genDR[100];   //[muon_n]
+    Short_t         muon_genPdgId[100];   //[muon_n]
 
     // List of branches
     TBranch        *b_gen1_pdgId;   //!
@@ -161,7 +161,6 @@ class GenAnalysis {
     TBranch        *b_rpcHit_z;   //!
     TBranch        *b_rpcHit_time;   //!
     TBranch        *b_rpcHit_timeErr;   //!
-    TBranch        *b_rpcHit_t0;   //!
     TBranch        *b_rpcHit_lx;   //!
     TBranch        *b_rpcHit_ly;   //!
     TBranch        *b_rpcHit_bx;   //!
@@ -174,6 +173,7 @@ class GenAnalysis {
     TBranch        *b_muon_time;   //!
     TBranch        *b_muon_RPCTime;   //!
     TBranch        *b_muon_RPCTimeNew;   //!
+    TBranch        *b_muon_RPCBeta;   //!
     TBranch        *b_muon_nRPC;   //!
     TBranch        *b_muon_nIRPC;   //!
     TBranch        *b_muon_genDR;   //!
@@ -310,7 +310,6 @@ void GenAnalysis::Init(TTree *tree)
   fChain->SetBranchAddress("rpcHit_z", rpcHit_z, &b_rpcHit_z);
   fChain->SetBranchAddress("rpcHit_time", rpcHit_time, &b_rpcHit_time);
   fChain->SetBranchAddress("rpcHit_timeErr", rpcHit_timeErr, &b_rpcHit_timeErr);
-  fChain->SetBranchAddress("rpcHit_t0", rpcHit_t0, &b_rpcHit_t0);
   fChain->SetBranchAddress("rpcHit_lx", rpcHit_lx, &b_rpcHit_lx);
   fChain->SetBranchAddress("rpcHit_ly", rpcHit_ly, &b_rpcHit_ly);
   fChain->SetBranchAddress("rpcHit_bx", rpcHit_bx, &b_rpcHit_bx);
@@ -323,6 +322,7 @@ void GenAnalysis::Init(TTree *tree)
   fChain->SetBranchAddress("muon_time", muon_time, &b_muon_time);
   fChain->SetBranchAddress("muon_RPCTime", muon_RPCTime, &b_muon_RPCTime);
   fChain->SetBranchAddress("muon_RPCTimeNew", muon_RPCTimeNew, &b_muon_RPCTimeNew);
+  fChain->SetBranchAddress("muon_RPCBeta", muon_RPCBeta, &b_muon_RPCBeta);
   fChain->SetBranchAddress("muon_nRPC", muon_nRPC, &b_muon_nRPC);
   fChain->SetBranchAddress("muon_nIRPC", muon_nIRPC, &b_muon_nIRPC);
   fChain->SetBranchAddress("muon_genDR", muon_genDR, &b_muon_genDR);
