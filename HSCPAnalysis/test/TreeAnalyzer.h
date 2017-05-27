@@ -5,8 +5,8 @@
 // found on file: DYJetsToLL_M-50_NoPU.root
 //////////////////////////////////////////////////////////
 
-#ifndef GenAnalysis_h
-#define GenAnalysis_h
+#ifndef TreeAnalyzer_h
+#define TreeAnalyzer_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -14,7 +14,7 @@
 
 // Header file for the classes stored in the TTree if any.
 
-class GenAnalysis {
+class TreeAnalyzer {
   public :
     TTree          *fChain;   //!pointer to the analyzed TTree or TChain
     Int_t           fCurrent; //!current Tree number in a TChain
@@ -179,8 +179,8 @@ class GenAnalysis {
     TBranch        *b_muon_genDR;   //!
     TBranch        *b_muon_genPdgId;   //!
 
-    GenAnalysis(TTree *tree=0);
-    virtual ~GenAnalysis();
+    TreeAnalyzer(TTree *tree=0);
+    virtual ~TreeAnalyzer();
     virtual Int_t    GetEntry(Long64_t entry);
     virtual Long64_t LoadTree(Long64_t entry);
     virtual void     Init(TTree *tree);
@@ -192,8 +192,8 @@ class GenAnalysis {
 
 #endif
 
-#ifdef GenAnalysis_cxx
-GenAnalysis::GenAnalysis(TTree *tree) : fChain(0) 
+#ifdef TreeAnalyzer_cxx
+TreeAnalyzer::TreeAnalyzer(TTree *tree) : fChain(0) 
 {
   // if parameter tree is not specified (or zero), connect the file
   // used to generate this class and read the Tree.
@@ -209,19 +209,19 @@ GenAnalysis::GenAnalysis(TTree *tree) : fChain(0)
   Init(tree);
 }
 
-GenAnalysis::~GenAnalysis()
+TreeAnalyzer::~TreeAnalyzer()
 {
   if (!fChain) return;
   delete fChain->GetCurrentFile();
 }
 
-Int_t GenAnalysis::GetEntry(Long64_t entry)
+Int_t TreeAnalyzer::GetEntry(Long64_t entry)
 {
   // Read contents of entry.
   if (!fChain) return 0;
   return fChain->GetEntry(entry);
 }
-Long64_t GenAnalysis::LoadTree(Long64_t entry)
+Long64_t TreeAnalyzer::LoadTree(Long64_t entry)
 {
   // Set the environment to read one entry
   if (!fChain) return -5;
@@ -234,7 +234,7 @@ Long64_t GenAnalysis::LoadTree(Long64_t entry)
   return centry;
 }
 
-void GenAnalysis::Init(TTree *tree)
+void TreeAnalyzer::Init(TTree *tree)
 {
   // The Init() function is called when the selector needs to initialize
   // a new tree or chain. Typically here the branch addresses and branch
@@ -330,7 +330,7 @@ void GenAnalysis::Init(TTree *tree)
   Notify();
 }
 
-Bool_t GenAnalysis::Notify()
+Bool_t TreeAnalyzer::Notify()
 {
   // The Notify() function is called when a new file is opened. This
   // can be either for a new TTree in a TChain or when when a new TTree
@@ -341,11 +341,11 @@ Bool_t GenAnalysis::Notify()
   return kTRUE;
 }
 
-void GenAnalysis::Show(Long64_t entry)
+void TreeAnalyzer::Show(Long64_t entry)
 {
   // Print contents of entry.
   // If entry is not specified, print current entry
   if (!fChain) return;
   fChain->Show(entry);
 }
-#endif // #ifdef GenAnalysis_cxx
+#endif // #ifdef TreeAnalyzer_cxx
