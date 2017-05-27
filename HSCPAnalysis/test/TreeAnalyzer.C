@@ -38,8 +38,26 @@ void TreeAnalyzer::Loop(TFile* fout)
   TH1D* h_muon1_beta = new TH1D("h_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
   TH1D* h_muon2_beta = new TH1D("h_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
   TH2D* h_muon1_beta__muon2_beta = new TH2D("h_muon1_beta__muon2_beta", "Beta distribution;Leading #tilde{#tau} #beta;2nd leading #tilde{#tau} #beta", 50, 0, 1, 50, 0, 1);
+  TH2D* h_muon1_m__muon2_m = new TH2D("h_muon1_m__muon2_m", "TOF mass;Leading #tilde{#tau} mass (GeV);2nd leading #tilde{#tau} mass (GeV)", 50, 0, 1, 50, 0, 1);
+
+  TH1D* h_iRPC_muon1_m = new TH1D("h_iRPC_muon1_m", "TOF mass;Leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
+  TH1D* h_iRPC_muon2_m = new TH1D("h_iRPC_muon2_m", "TOF mass;2nd leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
+  TH1D* h_iRPC_muon1_beta = new TH1D("h_iRPC_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
+  TH1D* h_iRPC_muon2_beta = new TH1D("h_iRPC_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
+
+  TH1D* h_cRPC_muon1_m = new TH1D("h_cRPC_muon1_m", "TOF mass;Leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
+  TH1D* h_cRPC_muon2_m = new TH1D("h_cRPC_muon2_m", "TOF mass;2nd leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
+  TH1D* h_cRPC_muon1_beta = new TH1D("h_cRPC_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
+  TH1D* h_cRPC_muon2_beta = new TH1D("h_cRPC_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
+
   h_muon1_m->GetXaxis()->SetNdivisions(505);
   h_muon2_m->GetXaxis()->SetNdivisions(505);
+  h_iRPC_muon1_m->GetXaxis()->SetNdivisions(505);
+  h_iRPC_muon2_m->GetXaxis()->SetNdivisions(505);
+  h_cRPC_muon1_m->GetXaxis()->SetNdivisions(505);
+  h_cRPC_muon2_m->GetXaxis()->SetNdivisions(505);
+  h_muon1_m__muon2_m->GetXaxis()->SetNdivisions(505);
+  h_muon1_m__muon2_m->GetYaxis()->SetNdivisions(505);
 
   if (fChain == 0) return;
 
@@ -75,15 +93,24 @@ void TreeAnalyzer::Loop(TFile* fout)
       }
     }
 
-    if ( muon_n > 0 and muon_nIRPC[0] > 0 ) {
+    if ( muon_n > 0 ) {
       const double pt1 = muon_pt[0], eta1 = muon_eta[0];
       const double beta1 = muon_RPCBeta[0];
       const double m1 = beta1 == 0 ? 0 : pt1*cosh(abs(eta1))*sqrt(1./beta1/beta1-1);
 
       h_muon1_beta->Fill(beta1);
       h_muon1_m->Fill(m1);
+
+      if ( muon_nIRPC[0] > 0 ) {
+        h_iRPC_muon1_beta->Fill(beta1);
+        h_iRPC_muon1_m->Fill(m1);
+      }
+      else {
+        h_cRPC_muon1_beta->Fill(beta1);
+        h_cRPC_muon1_m->Fill(m1);
+      }
     }
-    if ( muon_n > 1 and muon_nIRPC[1] > 0 ) {
+    if ( muon_n > 1 ) {
       const double pt1 = muon_pt[0], eta1 = muon_eta[0];
       const double beta1 = muon_RPCBeta[0];
       const double m1 = beta1 == 0 ? 0 : pt1*cosh(abs(eta1))*sqrt(1./beta1/beta1-1);
@@ -91,9 +118,20 @@ void TreeAnalyzer::Loop(TFile* fout)
       const double beta2 = muon_RPCBeta[1];
       const double m2 = beta2 == 0 ? 0 : pt2*cosh(abs(eta2))*sqrt(1./beta2/beta2-1);
 
-      h_muon1_beta__muon2_beta->Fill(beta1, beta2);
       h_muon2_beta->Fill(beta2);
       h_muon2_m->Fill(m2);
+
+      h_muon1_beta__muon2_beta->Fill(beta1, beta2);
+      h_muon1_m__muon2_m->Fill(m1, m2);
+
+      if ( muon_nIRPC[1] > 0 ) {
+        h_iRPC_muon2_beta->Fill(beta2);
+        h_iRPC_muon2_m->Fill(m2);
+      }
+      else {
+        h_cRPC_muon2_beta->Fill(beta2);
+        h_cRPC_muon2_m->Fill(m2);
+      }
     }
   }
 
