@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: ZMM_14TeV_TuneCUETP8M1_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D12 --fileout file:step1.root --no_exec --python_filename step1_cfg.py
+# with command line options: ZMM_14TeV_TuneCUETP8M1_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D17 --fileout file:step1.root --no_exec --python_filename step1_cfg.py
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
