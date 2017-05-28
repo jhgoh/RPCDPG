@@ -34,14 +34,10 @@ for var in ["all", "loose", "tight", "RPC"]:
     eff_abseta = fout.Get("%s/eff_abseta" % var)
     eff_abseta.Draw()
 
-    cEff_phi = TCanvas("c_phi_%s" % var, "Eff. #phi "+var, 500, 500)
-    eff_phi = fout.Get("%s/eff_phi" % var)
-    eff_phi.Draw()
-
     #cdR = TCanvas("cDR_%s" % var, "#Delta{}R "+var+" dR", 500, 500)
     #hDR = fout.Get("%s/h_minDR" % var)
     #hDR.Draw()
 
     #objs.extend([cEff_abseta, eff_abseta, cEff_phi, eff_phi, cdR, hDR])
-    objs.extend([cEff_abseta, eff_abseta, cEff_phi, eff_phi])
+    objs.extend([cEff_abseta, eff_abseta])
 

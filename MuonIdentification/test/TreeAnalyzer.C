@@ -56,7 +56,7 @@ void TreeAnalyzer::Loop(TFile* fout)
     }
 
     if ( gen1_pdgId != 0 and gen1_pt > minPt and abs(gen1_eta) < maxAbsEta ) {
-      const double gen1_abseta = gen1_eta;//abs(gen1_eta);
+      const double gen1_abseta = abs(gen1_eta);
       h_gen_abseta->Fill(gen1_abseta);
       h_gen_phi->Fill(gen1_phi);
 
@@ -99,7 +99,7 @@ void TreeAnalyzer::Loop(TFile* fout)
     }
 
     if ( gen2_pdgId != 0 and gen2_pt > minPt and abs(gen2_eta) < maxAbsEta ) {
-      const double gen2_abseta = gen2_eta; // abs(gen2_eta);
+      const double gen2_abseta = abs(gen2_eta);
       h_gen_abseta->Fill(gen2_abseta);
       h_gen_phi->Fill(gen2_phi);
 
