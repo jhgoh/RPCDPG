@@ -19,6 +19,12 @@
 #include "SimDataFormats/RPCDigiSimLink/interface/RPCDigiSimLinkfwd.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHit.h"
 #include "DataFormats/RPCRecHit/interface/RPCRecHitCollection.h"
+#include "DataFormats/DTRecHit/interface/DTRecSegment4D.h"
+#include "DataFormats/DTRecHit/interface/DTRecSegment4DCollection.h"
+#include "DataFormats/CSCRecHit/interface/CSCSegment.h"
+#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
+#include "DataFormats/GEMRecHit/interface/GEMSegment.h"
+#include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
@@ -29,6 +35,9 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/RPCGeometry/interface/RPCGeometry.h"
+#include "Geometry/DTGeometry/interface/DTGeometry.h"
+#include "Geometry/CSCGeometry/interface/CSCGeometry.h"
+#include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -74,6 +83,9 @@ private:
   edm::EDGetTokenT<edm::DetSetVector<RPCDigiSimLink>> rpcSimDigisToken_;
 
   edm::EDGetTokenT<RPCRecHitCollection> rpcRecHitsToken_;
+  edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken_;
+  edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken_;
+  edm::EDGetTokenT<GEMSegmentCollection> gemSegmentsToken_;
   edm::EDGetTokenT<reco::MuonCollection> muonToken_;
   edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
 
@@ -137,9 +149,31 @@ private:
   double b_rpcHit_lx[rpcHit_N], b_rpcHit_ly[rpcHit_N];
   short b_rpcHit_bx[rpcHit_N];
 
+  const static unsigned short dtSegment_N = 1000;
+  unsigned short b_dtSegment_n;
+  double b_dtSegment_x[dtSegment_N], b_dtSegment_y[dtSegment_N], b_dtSegment_z[dtSegment_N];
+  double b_dtSegment_dx[dtSegment_N], b_dtSegment_dy[dtSegment_N], b_dtSegment_dz[dtSegment_N];
+  double b_dtSegment_time[dtSegment_N];
+  double b_dtSegment_lx[dtSegment_N], b_dtSegment_ly[dtSegment_N];
+
+  const static unsigned short cscSegment_N = 1000;
+  unsigned short b_cscSegment_n;
+  double b_cscSegment_x[cscSegment_N], b_cscSegment_y[cscSegment_N], b_cscSegment_z[cscSegment_N];
+  double b_cscSegment_dx[cscSegment_N], b_cscSegment_dy[cscSegment_N], b_cscSegment_dz[cscSegment_N];
+  double b_cscSegment_time[cscSegment_N];
+  double b_cscSegment_lx[cscSegment_N], b_cscSegment_ly[cscSegment_N];
+
+  const static unsigned short gemSegment_N = 1000;
+  unsigned short b_gemSegment_n;
+  double b_gemSegment_x[gemSegment_N], b_gemSegment_y[gemSegment_N], b_gemSegment_z[gemSegment_N];
+  double b_gemSegment_dx[gemSegment_N], b_gemSegment_dy[gemSegment_N], b_gemSegment_dz[gemSegment_N];
+  double b_gemSegment_time[gemSegment_N];
+  double b_gemSegment_lx[gemSegment_N], b_gemSegment_ly[gemSegment_N];
+
   const static unsigned short muon_N = 10;
   unsigned short b_muon_n;
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
+  short b_muon_q[muon_N];
   bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N], b_muon_isRPC[muon_N];
   double b_muon_time[muon_N], b_muon_RPCTime[muon_N], b_muon_RPCTimeNew[muon_N];
   double b_muon_RPCBeta[muon_N];
@@ -161,6 +195,9 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   //rpcDigisToken_(consumes<RPCDigiCollection>(pset.getParameter<edm::InputTag>("rpcDigis"))),
   rpcSimDigisToken_(consumes<edm::DetSetVector<RPCDigiSimLink>>(pset.getParameter<edm::InputTag>("rpcSimDigis"))),
   rpcRecHitsToken_(consumes<RPCRecHitCollection>(pset.getParameter<edm::InputTag>("rpcRecHits"))),
+  dtSegmentsToken_(consumes<DTRecSegment4DCollection>(pset.getParameter<edm::InputTag>("dtSegments"))),
+  cscSegmentsToken_(consumes<CSCSegmentCollection>(pset.getParameter<edm::InputTag>("cscSegments"))),
+  gemSegmentsToken_(consumes<GEMSegmentCollection>(pset.getParameter<edm::InputTag>("gemSegments"))),
   muonToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
   vertexToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertex")))
 {
@@ -273,10 +310,44 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("rpcHit_ly", b_rpcHit_ly, "rpcHit_ly[rpcHit_n]/D");
   tree_->Branch("rpcHit_bx", b_rpcHit_bx, "rpcHit_bx[rpcHit_n]/S");
 
+  tree_->Branch("dtSegment_n", &b_dtSegment_n, "dtSegment_n/s");
+  tree_->Branch("dtSegment_x", b_dtSegment_x, "dtSegment_x[dtSegment_n]/D");
+  tree_->Branch("dtSegment_y", b_dtSegment_y, "dtSegment_y[dtSegment_n]/D");
+  tree_->Branch("dtSegment_z", b_dtSegment_z, "dtSegment_z[dtSegment_n]/D");
+  tree_->Branch("dtSegment_dx", b_dtSegment_dx, "dtSegment_dx[dtSegment_n]/D");
+  tree_->Branch("dtSegment_dy", b_dtSegment_dy, "dtSegment_dy[dtSegment_n]/D");
+  tree_->Branch("dtSegment_dz", b_dtSegment_dz, "dtSegment_dz[dtSegment_n]/D");
+  tree_->Branch("dtSegment_time", b_dtSegment_time, "dtSegment_time[dtSegment_n]/D");
+  tree_->Branch("dtSegment_lx", b_dtSegment_lx, "dtSegment_lx[dtSegment_n]/D");
+  tree_->Branch("dtSegment_ly", b_dtSegment_ly, "dtSegment_ly[dtSegment_n]/D");
+
+  tree_->Branch("cscSegment_n", &b_cscSegment_n, "cscSegment_n/s");
+  tree_->Branch("cscSegment_x", b_cscSegment_x, "cscSegment_x[cscSegment_n]/D");
+  tree_->Branch("cscSegment_y", b_cscSegment_y, "cscSegment_y[cscSegment_n]/D");
+  tree_->Branch("cscSegment_z", b_cscSegment_z, "cscSegment_z[cscSegment_n]/D");
+  tree_->Branch("cscSegment_dx", b_cscSegment_dx, "cscSegment_dx[cscSegment_n]/D");
+  tree_->Branch("cscSegment_dy", b_cscSegment_dy, "cscSegment_dy[cscSegment_n]/D");
+  tree_->Branch("cscSegment_dz", b_cscSegment_dz, "cscSegment_dz[cscSegment_n]/D");
+  tree_->Branch("cscSegment_time", b_cscSegment_time, "cscSegment_time[cscSegment_n]/D");
+  tree_->Branch("cscSegment_lx", b_cscSegment_lx, "cscSegment_lx[cscSegment_n]/D");
+  tree_->Branch("cscSegment_ly", b_cscSegment_ly, "cscSegment_ly[cscSegment_n]/D");
+
+  tree_->Branch("gemSegment_n", &b_gemSegment_n, "gemSegment_n/s");
+  tree_->Branch("gemSegment_x", b_gemSegment_x, "gemSegment_x[gemSegment_n]/D");
+  tree_->Branch("gemSegment_y", b_gemSegment_y, "gemSegment_y[gemSegment_n]/D");
+  tree_->Branch("gemSegment_z", b_gemSegment_z, "gemSegment_z[gemSegment_n]/D");
+  tree_->Branch("gemSegment_dx", b_gemSegment_dx, "gemSegment_dx[gemSegment_n]/D");
+  tree_->Branch("gemSegment_dy", b_gemSegment_dy, "gemSegment_dy[gemSegment_n]/D");
+  tree_->Branch("gemSegment_dz", b_gemSegment_dz, "gemSegment_dz[gemSegment_n]/D");
+  tree_->Branch("gemSegment_time", b_gemSegment_time, "gemSegment_time[gemSegment_n]/D");
+  tree_->Branch("gemSegment_lx", b_gemSegment_lx, "gemSegment_lx[gemSegment_n]/D");
+  tree_->Branch("gemSegment_ly", b_gemSegment_ly, "gemSegment_ly[gemSegment_n]/D");
+
   tree_->Branch("muon_n", &b_muon_n, "muon_n/s");
   tree_->Branch("muon_pt", b_muon_pt, "muon_pt[muon_n]/D");
   tree_->Branch("muon_eta", b_muon_eta, "muon_eta[muon_n]/D");
   tree_->Branch("muon_phi", b_muon_phi, "muon_phi[muon_n]/D");
+  tree_->Branch("muon_q", b_muon_q, "muon_q[muon_n]/S");
   tree_->Branch("muon_isLoose", b_muon_isLoose, "muon_isLoose[muon_n]/O");
   tree_->Branch("muon_isTight", b_muon_isTight, "muon_isTight[muon_n]/O");
   tree_->Branch("muon_isRPC", b_muon_isRPC, "muon_isRPC[muon_n]/O");
@@ -303,7 +374,7 @@ double dist(const T1& a, const T2& b)
 void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& eventSetup)
 {
   b_simHit1_n = b_simHit2_n = b_simDigi1_n = b_simDigi2_n = 0;
-  b_rpcHit_n = 0;
+  b_rpcHit_n = b_dtSegment_n = b_cscSegment_n = b_gemSegment_n = 0;
   b_muon_n = 0;
 
   b_gen1_pdgId = b_gen1_pt = b_gen1_eta = b_gen1_phi = b_gen1_m = b_gen1_beta = 0;
@@ -323,6 +394,15 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
 
   edm::Handle<RPCRecHitCollection> rpcRecHitsHandle;
   event.getByToken(rpcRecHitsToken_, rpcRecHitsHandle);
+
+  edm::Handle<DTRecSegment4DCollection> dtSegmentsHandle;
+  event.getByToken(dtSegmentsToken_, dtSegmentsHandle);
+
+  edm::Handle<CSCSegmentCollection> cscSegmentsHandle;
+  event.getByToken(cscSegmentsToken_, cscSegmentsHandle);
+
+  edm::Handle<GEMSegmentCollection> gemSegmentsHandle;
+  event.getByToken(gemSegmentsToken_, gemSegmentsHandle);
 
   edm::Handle<reco::MuonCollection> muonHandle;
   event.getByToken(muonToken_, muonHandle);
@@ -377,7 +457,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       if ( std::abs(pid) == signalPdgId_ ) continue;
 
       const RPCDetId rpcId(simHit.detUnitId());
-      const RPCRoll* roll = rpcGeom->roll(rpcId);
+      const auto roll = rpcGeom->roll(rpcId);
       const auto simHitGPos = roll->toGlobal(simHit.localPosition());
       //const double r = dist(simPV, simHitGPos);
       //const double r0 = simHitGPos.mag();
@@ -445,7 +525,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
            DetId(rawId).subdetId() != 3 ) continue;
 
       const RPCDetId rpcId(rawId);
-      const RPCRoll* roll = rpcGeom->roll(rpcId);
+      const auto roll = rpcGeom->roll(rpcId);
       if ( !roll ) continue;
       const double r0 = roll->toGlobal(LocalPoint(0,0,0)).mag();
 
@@ -540,6 +620,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       b_muon_pt[b_muon_n] = mu.pt();
       b_muon_eta[b_muon_n] = mu.eta();
       b_muon_phi[b_muon_n] = mu.phi();
+      b_muon_q[b_muon_n] = mu.charge();
       b_muon_isLoose[b_muon_n] = muon::isLooseMuon(mu);
       b_muon_isTight[b_muon_n] = !pv ? false : muon::isTightMuon(mu, *pv);
       b_muon_isRPC[b_muon_n] = muon::isGoodMuon(mu, muon::RPCMuLoose, reco::Muon::RPCHitAndTrackArbitration);
@@ -580,7 +661,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   if ( rpcRecHitsHandle.isValid() ) {
     for ( auto& rpcHit : *rpcRecHitsHandle ) {
       const RPCDetId rpcId = rpcHit.rpcId();
-      const RPCRoll* roll = rpcGeom->roll(rpcId);
+      const auto roll = rpcGeom->roll(rpcId);
       const auto gp = roll->toGlobal(rpcHit.localPosition());
 
       b_rpcHit_isBarrel[b_rpcHit_n] = (rpcId.region() == 0);
@@ -612,6 +693,78 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
     }
   }
 
+  if ( dtSegmentsHandle.isValid() ) {
+    edm::ESHandle<DTGeometry> dtGeom;
+    eventSetup.get<MuonGeometryRecord>().get(dtGeom);
+
+    for ( auto& dtSegment : *dtSegmentsHandle ) {
+      const auto dtId = dtSegment.chamberId();
+      const auto ch = dtGeom->chamber(dtId);
+      const auto gp = ch->toGlobal(dtSegment.localPosition());
+      const auto gd = ch->toGlobal(dtSegment.localDirection());
+
+      b_dtSegment_x[b_dtSegment_n] = gp.x();
+      b_dtSegment_y[b_dtSegment_n] = gp.y();
+      b_dtSegment_z[b_dtSegment_n] = gp.z();
+      b_dtSegment_dx[b_dtSegment_n] = gd.x();
+      b_dtSegment_dy[b_dtSegment_n] = gd.y();
+      b_dtSegment_dz[b_dtSegment_n] = gd.z();
+      b_dtSegment_time[b_dtSegment_n] = 0;//dtSegment.time();
+      b_dtSegment_lx[b_dtSegment_n] = dtSegment.localPosition().x();
+      b_dtSegment_ly[b_dtSegment_n] = dtSegment.localPosition().y();
+
+      if ( ++b_dtSegment_n >= dtSegment_N ) break;
+    }
+  }
+
+  if ( cscSegmentsHandle.isValid() ) {
+    edm::ESHandle<CSCGeometry> cscGeom;
+    eventSetup.get<MuonGeometryRecord>().get(cscGeom);
+
+    for ( auto& cscSegment : *cscSegmentsHandle ) {
+      const auto cscId = cscSegment.cscDetId();
+      const auto ch = cscGeom->chamber(cscId);
+      const auto gp = ch->toGlobal(cscSegment.localPosition());
+      const auto gd = ch->toGlobal(cscSegment.localDirection());
+
+      b_cscSegment_x[b_cscSegment_n] = gp.x();
+      b_cscSegment_y[b_cscSegment_n] = gp.y();
+      b_cscSegment_z[b_cscSegment_n] = gp.z();
+      b_cscSegment_dx[b_cscSegment_n] = gd.x();
+      b_cscSegment_dy[b_cscSegment_n] = gd.y();
+      b_cscSegment_dz[b_cscSegment_n] = gd.z();
+      b_cscSegment_time[b_cscSegment_n] = cscSegment.time();
+      b_cscSegment_lx[b_cscSegment_n] = cscSegment.localPosition().x();
+      b_cscSegment_ly[b_cscSegment_n] = cscSegment.localPosition().y();
+
+      if ( ++b_cscSegment_n >= cscSegment_N ) break;
+    }
+  }
+
+  if ( gemSegmentsHandle.isValid() ) {
+    edm::ESHandle<GEMGeometry> gemGeom;
+    eventSetup.get<MuonGeometryRecord>().get(gemGeom);
+
+    for ( auto& gemSegment : *gemSegmentsHandle ) {
+      const auto gemId = gemSegment.gemDetId();
+      const auto ch = gemGeom->superChamber(gemId);
+      const auto gp = ch->toGlobal(gemSegment.localPosition());
+      const auto gd = ch->toGlobal(gemSegment.localDirection());
+
+      b_gemSegment_x[b_gemSegment_n] = gp.x();
+      b_gemSegment_y[b_gemSegment_n] = gp.y();
+      b_gemSegment_z[b_gemSegment_n] = gp.z();
+      b_gemSegment_dx[b_gemSegment_n] = gd.x();
+      b_gemSegment_dy[b_gemSegment_n] = gd.y();
+      b_gemSegment_dz[b_gemSegment_n] = gd.z();
+      b_gemSegment_time[b_gemSegment_n] = gemSegment.time();
+      b_gemSegment_lx[b_gemSegment_n] = gemSegment.localPosition().x();
+      b_gemSegment_ly[b_gemSegment_n] = gemSegment.localPosition().y();
+
+      if ( ++b_gemSegment_n >= gemSegment_N ) break;
+    }
+  }
+
   tree_->Fill();
 }
 
@@ -632,7 +785,7 @@ std::vector<HitInfo> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu,
     if ( (*ihit)->geographicalId().det() != DetId::Muon or (*ihit)->geographicalId().subdetId() != 3 ) continue;
 
     const RPCDetId detId((*ihit)->rawId());
-    const RPCRoll* roll = rpcGeom->roll(detId);
+    const auto roll = rpcGeom->roll(detId);
     const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
 
     const auto hitRange = rpcHits.get(detId);
