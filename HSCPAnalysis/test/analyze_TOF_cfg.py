@@ -7,8 +7,11 @@ process = cms.Process('Analysis',eras.Phase2C1)
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.Geometry.GeometryExtended2023D12_cff')
-process.load('Configuration.Geometry.GeometryExtended2023D12Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17Reco_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.maxEvents = cms.untracked.PSet(
