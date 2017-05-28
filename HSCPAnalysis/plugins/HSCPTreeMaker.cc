@@ -140,7 +140,7 @@ private:
   const static unsigned short muon_N = 10;
   unsigned short b_muon_n;
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
-  bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N];
+  bool b_muon_isLoose[muon_N], b_muon_isTight[muon_N], b_muon_isRPC[muon_N];
   double b_muon_time[muon_N], b_muon_RPCTime[muon_N], b_muon_RPCTimeNew[muon_N];
   double b_muon_RPCBeta[muon_N];
   unsigned short b_muon_nRPC[muon_N], b_muon_nIRPC[muon_N];
@@ -279,6 +279,7 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("muon_phi", b_muon_phi, "muon_phi[muon_n]/D");
   tree_->Branch("muon_isLoose", b_muon_isLoose, "muon_isLoose[muon_n]/O");
   tree_->Branch("muon_isTight", b_muon_isTight, "muon_isTight[muon_n]/O");
+  tree_->Branch("muon_isRPC", b_muon_isRPC, "muon_isRPC[muon_n]/O");
   tree_->Branch("muon_time", b_muon_time, "muon_time[muon_n]/D");
   tree_->Branch("muon_RPCTime", b_muon_RPCTime, "muon_RPCTime[muon_n]/D");
   tree_->Branch("muon_RPCTimeNew", b_muon_RPCTimeNew, "muon_RPCTimeNew[muon_n]/D");
@@ -528,14 +529,20 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       break;
     }
 
+    reco::MuonCollection muons;
     for ( auto& mu : *muonHandle ) {
       if ( std::abs(mu.eta()) >= 2.5 or mu.pt() < 20 ) continue;
+      muons.push_back(mu);
+    }
+    std::sort(muons.begin(), muons.end(), [](const reco::Muon& a, const reco::Muon& b){return a.pt() > b.pt();});
 
+    for ( auto& mu : muons ) {
       b_muon_pt[b_muon_n] = mu.pt();
       b_muon_eta[b_muon_n] = mu.eta();
       b_muon_phi[b_muon_n] = mu.phi();
       b_muon_isLoose[b_muon_n] = muon::isLooseMuon(mu);
       b_muon_isTight[b_muon_n] = !pv ? false : muon::isTightMuon(mu, *pv);
+      b_muon_isRPC[b_muon_n] = muon::isGoodMuon(mu, muon::RPCMuLoose, reco::Muon::RPCHitAndTrackArbitration);
 
       b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
       b_muon_RPCTime[b_muon_n] = mu.rpcTime().timeAtIpInOut;

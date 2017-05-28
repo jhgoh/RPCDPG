@@ -91,6 +91,7 @@ class TreeAnalyzer {
     Double_t        muon_phi[100];   //[muon_n]
     Bool_t          muon_isLoose[100];   //[muon_n]
     Bool_t          muon_isTight[100];   //[muon_n]
+    Bool_t          muon_isRPC[100];   //[muon_n]
     Double_t        muon_time[100];   //[muon_n]
     Double_t        muon_RPCTime[100];   //[muon_n]
     Double_t        muon_RPCTimeNew[100];   //[muon_n]
@@ -170,6 +171,7 @@ class TreeAnalyzer {
     TBranch        *b_muon_phi;   //!
     TBranch        *b_muon_isLoose;   //!
     TBranch        *b_muon_isTight;   //!
+    TBranch        *b_muon_isRPC;   //!
     TBranch        *b_muon_time;   //!
     TBranch        *b_muon_RPCTime;   //!
     TBranch        *b_muon_RPCTimeNew;   //!
@@ -319,6 +321,7 @@ void TreeAnalyzer::Init(TTree *tree)
   fChain->SetBranchAddress("muon_phi", muon_phi, &b_muon_phi);
   fChain->SetBranchAddress("muon_isLoose", muon_isLoose, &b_muon_isLoose);
   fChain->SetBranchAddress("muon_isTight", muon_isTight, &b_muon_isTight);
+  fChain->SetBranchAddress("muon_isRPC", muon_isRPC, &b_muon_isRPC);
   fChain->SetBranchAddress("muon_time", muon_time, &b_muon_time);
   fChain->SetBranchAddress("muon_RPCTime", muon_RPCTime, &b_muon_RPCTime);
   fChain->SetBranchAddress("muon_RPCTimeNew", muon_RPCTimeNew, &b_muon_RPCTimeNew);
