@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: ZMM_14TeV_TuneCUETP8M1_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D17 --fileout file:step1.root --no_exec --python_filename step1_cfg.py
+# with command line options: SingleMuPt100_pythia8_cfi --conditions auto:phase2_realistic -n 1000 --era Phase2C2 --eventcontent FEVTDEBUG --relval 9000,100 -s GEN,SIM --datatier GEN-SIM --beamspot HLLHC14TeV --geometry Extended2023D17 --fileout file:step1.root --no_exec --python_filename step1_SingleMuPt100HighEta_cfg.py --customise RPCUpgrade/Configuration/customise_oneMuonAtHighEta_cff.customise_OneMuonAtHighEta
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -15,8 +15,8 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryExtended2023D12Reco_cff')
-process.load('Configuration.Geometry.GeometryExtended2023D12_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
 process.load('IOMC.EventVertexGenerators.VtxSmearedHLLHC14TeV_cfi')
@@ -38,7 +38,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('ZMM_14TeV_TuneCUETP8M1_cfi nevts:1000'),
+    annotation = cms.untracked.string('SingleMuPt100_pythia8_cfi nevts:1000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -66,50 +66,25 @@ process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 
-process.generator = cms.EDFilter("Pythia8GeneratorFilter",
-    PythiaParameters = cms.PSet(
-        parameterSets = cms.vstring('pythia8CommonSettings', 
-            'pythia8CUEP8M1Settings', 
-            'processParameters'),
-        processParameters = cms.vstring('WeakSingleBoson:ffbar2gmZ = on', 
-            '23:onMode = off', 
-            '23:onIfAny = 13', 
-            'PhaseSpace:mHatMin = 75.'),
-        pythia8CUEP8M1Settings = cms.vstring('Tune:pp 14', 
-            'Tune:ee 7', 
-            'MultipartonInteractions:pT0Ref=2.4024', 
-            'MultipartonInteractions:ecmPow=0.25208', 
-            'MultipartonInteractions:expPow=1.6'),
-        pythia8CommonSettings = cms.vstring('Tune:preferLHAPDF = 2', 
-            'Main:timesAllowErrors = 10000', 
-            'Check:epTolErr = 0.01', 
-            'Beams:setProductionScalesFromLHEF = off', 
-            'SLHA:keepSM = on', 
-            'SLHA:minMassSM = 1000.', 
-            'ParticleDecays:limitTau0 = on', 
-            'ParticleDecays:tau0Max = 10', 
-            'ParticleDecays:allowPhotonRadiation = on')
+process.generator = cms.EDFilter("Pythia8PtGun",
+    PGunParameters = cms.PSet(
+        AddAntiParticle = cms.bool(True),
+        MaxEta = cms.double(2.5),
+        MaxPhi = cms.double(3.14159265359),
+        MaxPt = cms.double(100.01),
+        MinEta = cms.double(-2.5),
+        MinPhi = cms.double(-3.14159265359),
+        MinPt = cms.double(99.99),
+        ParticleID = cms.vint32(-13)
     ),
-    comEnergy = cms.double(14000.0),
-    filterEfficiency = cms.untracked.double(1.0),
-    maxEventsToPrint = cms.untracked.int32(0),
-    pythiaHepMCVerbosity = cms.untracked.bool(False),
-    pythiaPylistVerbosity = cms.untracked.int32(0)
+    PythiaParameters = cms.PSet(
+        parameterSets = cms.vstring()
+    ),
+    Verbosity = cms.untracked.int32(0),
+    firstRun = cms.untracked.uint32(1),
+    psethack = cms.string('single mu pt 100')
 )
 
-
-process.mumugenfilter = cms.EDFilter("MCParticlePairFilter",
-    MaxEta = cms.untracked.vdouble(4.0, 4.0),
-    MinEta = cms.untracked.vdouble(-4.0, -4.0),
-    MinPt = cms.untracked.vdouble(2.5, 2.5),
-    ParticleCharge = cms.untracked.int32(-1),
-    ParticleID1 = cms.untracked.vint32(13),
-    ParticleID2 = cms.untracked.vint32(13),
-    Status = cms.untracked.vint32(1, 1)
-)
-
-
-process.ProductionFilterSequence = cms.Sequence(process.generator+process.mumugenfilter)
 
 # Path and EndPath definitions
 process.generation_step = cms.Path(process.pgen)
@@ -124,8 +99,17 @@ from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 # filter all path with the production filter sequence
 for path in process.paths:
-	getattr(process,path)._seq = process.ProductionFilterSequence * getattr(process,path)._seq 
+	getattr(process,path)._seq = process.generator * getattr(process,path)._seq 
 
+# customisation of the process.
+
+# Automatic addition of the customisation function from RPCUpgrade.Configuration.customise_oneMuonAtHighEta_cff
+from RPCUpgrade.Configuration.customise_oneMuonAtHighEta_cff import customise_OneMuonAtHighEta 
+
+#call to customisation function customise_OneMuonAtHighEta imported from RPCUpgrade.Configuration.customise_oneMuonAtHighEta_cff
+process = customise_OneMuonAtHighEta(process)
+
+# End of customisation functions
 
 # Customisation from command line
 

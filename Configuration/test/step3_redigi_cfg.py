@@ -58,7 +58,7 @@ process.AODSIMoutput = cms.OutputModule("PoolOutputModule",
         filterName = cms.untracked.string('')
     ),
     eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
-    fileName = cms.untracked.string('file:step3.root'),
+    fileName = cms.untracked.string('step3.root'),
     outputCommands = process.AODSIMEventContent.outputCommands
 )
 
