@@ -195,7 +195,7 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
   edm::Handle<reco::VertexCollection> verticesHandle;
   event.getByToken(verticesToken_, verticesHandle);
   b_vertices_n = verticesHandle->size();
-  const reco::Vertex* pv = verticesHandle->empty() ? &verticesHandle->at(0) : 0;
+  const reco::Vertex* pv = verticesHandle->empty() ? 0 : &verticesHandle->at(0);
 
   edm::Handle<TrackingParticleCollection> simTPsHandle;
   event.getByToken(simTPsToken_, simTPsHandle);
@@ -243,24 +243,25 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
     b_muons_isSta[b_muons_n] = b_muons_isGlb[b_muons_n] = b_muons_isTrk[b_muons_n] = b_muons_isRPC[b_muons_n] = false;
     b_muons_isLoose[b_muons_n] = b_muons_isTight[b_muons_n] = false;
 
-    b_muons_pt[b_muons_n] = b_muons_eta[b_muons_n] = b_muons_phi[b_muons_n] = 0;
-    b_muons_glb_pt[b_muons_n] = b_muons_glb_eta[b_muons_n] = b_muons_glb_phi[b_muons_n] = b_muons_glb_ptErr[b_muons_n] = 0;
-    b_muons_sta_pt[b_muons_n] = b_muons_sta_eta[b_muons_n] = b_muons_sta_phi[b_muons_n] = b_muons_sta_ptErr[b_muons_n] = 0;
+    b_muons_pt[b_muons_n] = b_muons_eta[b_muons_n] = b_muons_phi[b_muons_n] = -1e5;
+    b_muons_time[b_muons_n] = b_muons_rpcTime[b_muons_n] = b_muons_rpcTime1[b_muons_n] = -1e5;
+    b_muons_glb_pt[b_muons_n] = b_muons_glb_eta[b_muons_n] = b_muons_glb_phi[b_muons_n] = b_muons_glb_ptErr[b_muons_n] = -1e5;
+    b_muons_sta_pt[b_muons_n] = b_muons_sta_eta[b_muons_n] = b_muons_sta_phi[b_muons_n] = b_muons_sta_ptErr[b_muons_n] = -1e5;
 
     b_muons_hits_n[b_muons_n] = b_muons_muonHits_n[b_muons_n] = 0;
     b_muons_DTHits_n[b_muons_n] = b_muons_CSCHits_n[b_muons_n] = 0;
-    b_muons_RPCHits_n[b_muons_n] = b_muons_muonHits_n[b_muons_n] = 0;
-    b_muons_GEMHits_n[b_muons_n] = b_muons_muonHits_n[b_muons_n] = 0;
+    b_muons_RPCHits_n[b_muons_n] = 0;
+    b_muons_GEMHits_n[b_muons_n] = b_muons_ME0Hits_n[b_muons_n] = 0;
 
     b_muons_glb_hits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
     b_muons_glb_DTHits_n[b_muons_n] = b_muons_glb_CSCHits_n[b_muons_n] = 0;
-    b_muons_glb_RPCHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
-    b_muons_glb_GEMHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
+    b_muons_glb_RPCHits_n[b_muons_n] = b_muons_glb_iRPCHits_n[b_muons_n] = 0;
+    b_muons_glb_GEMHits_n[b_muons_n] = b_muons_glb_ME0Hits_n[b_muons_n] = 0;
 
     b_muons_sta_hits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
     b_muons_sta_DTHits_n[b_muons_n] = b_muons_sta_CSCHits_n[b_muons_n] = 0;
-    b_muons_sta_RPCHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
-    b_muons_sta_GEMHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
+    b_muons_sta_RPCHits_n[b_muons_n] = b_muons_sta_iRPCHits_n[b_muons_n] = 0;
+    b_muons_sta_GEMHits_n[b_muons_n] = b_muons_sta_ME0Hits_n[b_muons_n] = 0;
 
     b_muons_gen_pt[b_muons_n] = simTP->pt();
     b_muons_gen_eta[b_muons_n] = simTP->eta();
@@ -367,7 +368,7 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
     b_muons_isRPC[b_muons_n] = muonRef->isRPCMuon();
     b_muons_isLoose[b_muons_n] = muon::isLooseMuon(*muonRef);
     b_muons_isTight[b_muons_n] = pv ? muon::isTightMuon(*muonRef, *pv) : false;
-    b_muons_gen_pt[b_muons_n] = b_muons_gen_eta[b_muons_n] = b_muons_gen_phi[b_muons_n] = 0;
+    b_muons_gen_pt[b_muons_n] = b_muons_gen_eta[b_muons_n] = b_muons_gen_phi[b_muons_n] = -1e5;
 
     if ( true ) {
       auto track = muonRef->muonBestTrack();
