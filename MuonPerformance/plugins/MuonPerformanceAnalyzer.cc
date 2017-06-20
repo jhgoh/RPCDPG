@@ -66,7 +66,7 @@ private:
   const static unsigned short muons_N = 100;
   unsigned short b_muons_n;
   float b_muons_pt[muons_N], b_muons_eta[muons_N], b_muons_phi[muons_N];
-  float b_muons_time[muons_N], b_muons_rpcTime[muons_N];
+  float b_muons_time[muons_N], b_muons_rpcTime[muons_N], b_muons_rpcTime1[muons_N];
   float b_muons_sta_pt[muons_N], b_muons_sta_eta[muons_N], b_muons_sta_phi[muons_N];
   float b_muons_glb_pt[muons_N], b_muons_glb_eta[muons_N], b_muons_glb_phi[muons_N];
   float b_muons_gen_pt[muons_N], b_muons_gen_eta[muons_N], b_muons_gen_phi[muons_N];
@@ -74,7 +74,7 @@ private:
 
   unsigned int b_muons_hits_n[muons_N], b_muons_muonHits_n[muons_N];
   unsigned int b_muons_DTHits_n[muons_N], b_muons_CSCHits_n[muons_N];
-  unsigned int b_muons_RPCHits_n[muons_N], b_muons_iRPCHits_n[muons_N];
+  unsigned int b_muons_RPCHits_n[muons_N];
   unsigned int b_muons_GEMHits_n[muons_N], b_muons_ME0Hits_n[muons_N];
 
   unsigned int b_muons_glb_hits_n[muons_N], b_muons_glb_muonHits_n[muons_N];
@@ -141,6 +141,7 @@ MuonPerformanceAnalyzer::MuonPerformanceAnalyzer(const edm::ParameterSet& pset)
 
   tree_->Branch("muons_time", b_muons_time, "muons_time[muons_n]/F");
   tree_->Branch("muons_rpcTime", b_muons_rpcTime, "muons_rpcTime[muons_n]/F");
+  tree_->Branch("muons_rpcTime1", b_muons_rpcTime1, "muons_rpcTime1[muons_n]/F");
 
   tree_->Branch("muons_sta_pt" , b_muons_sta_pt, "muons_sta_pt[muons_n]/F");
   tree_->Branch("muons_sta_eta", b_muons_sta_eta, "muons_sta_eta[muons_n]/F");
@@ -161,7 +162,6 @@ MuonPerformanceAnalyzer::MuonPerformanceAnalyzer(const edm::ParameterSet& pset)
   tree_->Branch("muons_DTHits_n"  , b_muons_DTHits_n  , "muons_DTHits_n[muons_n]/s"  );
   tree_->Branch("muons_CSCHits_n" , b_muons_CSCHits_n , "muons_CSCHits_n[muons_n]/s" );
   tree_->Branch("muons_RPCHits_n" , b_muons_RPCHits_n , "muons_RPCHits_n[muons_n]/s" );
-  tree_->Branch("muons_iRPCHits_n", b_muons_iRPCHits_n, "muons_iRPCHits_n[muons_n]/s");
   tree_->Branch("muons_GEMHits_n" , b_muons_GEMHits_n , "muons_GEMHits_n[muons_n]/s" );
   tree_->Branch("muons_ME0Hits_n" , b_muons_ME0Hits_n , "muons_ME0Hits_n[muons_n]/s" );
 
@@ -283,16 +283,12 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
         b_muons_time[b_muons_n] = muonRef->time().timeAtIpInOut;
         b_muons_rpcTime[b_muons_n] = muonRef->rpcTime().timeAtIpInOut;
 
-        std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
-        const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
-
         auto hitPattern = track->hitPattern();
         b_muons_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
         b_muons_muonHits_n[b_muons_n] = hitPattern.numberOfValidMuonHits();
         b_muons_DTHits_n[b_muons_n] = hitPattern.numberOfValidMuonDTHits();
         b_muons_CSCHits_n[b_muons_n] = hitPattern.numberOfValidMuonCSCHits();
         b_muons_RPCHits_n[b_muons_n] = hitPattern.numberOfValidMuonRPCHits();
-        b_muons_iRPCHits_n[b_muons_n] = nIRPCHits;
         b_muons_GEMHits_n[b_muons_n] = hitPattern.numberOfValidMuonGEMHits();
         b_muons_ME0Hits_n[b_muons_n] = hitPattern.numberOfValidMuonME0Hits();
       }
@@ -306,6 +302,9 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
 
         std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
         const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
+        const double sumTime = std::accumulate(rpcHits.begin(), rpcHits.end(), 0.0,
+                                               [](double t, const RPCHitInfo h){return h.t == 0.0 ? t : t+h.t;}); // to be removed for >= 911p1
+        b_muons_rpcTime1[b_muons_n] = rpcHits.empty() ? 0 : sumTime/rpcHits.size();
 
         auto hitPattern = track->hitPattern();
         b_muons_glb_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
@@ -379,16 +378,12 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
       b_muons_time[b_muons_n] = muonRef->time().timeAtIpInOut;
       b_muons_rpcTime[b_muons_n] = muonRef->rpcTime().timeAtIpInOut;
 
-      std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
-      const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
-
       auto hitPattern = track->hitPattern();
       b_muons_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
       b_muons_muonHits_n[b_muons_n] = hitPattern.numberOfValidMuonHits();
       b_muons_DTHits_n[b_muons_n] = hitPattern.numberOfValidMuonDTHits();
       b_muons_CSCHits_n[b_muons_n] = hitPattern.numberOfValidMuonCSCHits();
       b_muons_RPCHits_n[b_muons_n] = hitPattern.numberOfValidMuonRPCHits();
-      b_muons_iRPCHits_n[b_muons_n] = nIRPCHits;
       b_muons_GEMHits_n[b_muons_n] = hitPattern.numberOfValidMuonGEMHits();
       b_muons_ME0Hits_n[b_muons_n] = hitPattern.numberOfValidMuonME0Hits();
     }
@@ -410,6 +405,9 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
 
       std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
       const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
+      const double sumTime = std::accumulate(rpcHits.begin(), rpcHits.end(), 0.0,
+                                             [](double t, const RPCHitInfo h){return h.t == 0.0 ? t : t+h.t;}); // to be removed for >= 911p1
+      b_muons_rpcTime1[b_muons_n] = rpcHits.empty() ? 0 : sumTime/rpcHits.size();
 
       auto hitPattern = track->hitPattern();
       b_muons_glb_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
