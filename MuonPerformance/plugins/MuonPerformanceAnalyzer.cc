@@ -369,6 +369,20 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
     b_muons_isLoose[b_muons_n] = muon::isLooseMuon(*muonRef);
     b_muons_isTight[b_muons_n] = pv ? muon::isTightMuon(*muonRef, *pv) : false;
     b_muons_gen_pt[b_muons_n] = b_muons_gen_eta[b_muons_n] = b_muons_gen_phi[b_muons_n] = -1e5;
+    b_muons_time[b_muons_n] = b_muons_rpcTime[b_muons_n] = b_muons_rpcTime1[b_muons_n] = -1e5;
+
+    b_muons_glb_pt[b_muons_n] = b_muons_glb_eta[b_muons_n] = b_muons_glb_phi[b_muons_n] = b_muons_glb_ptErr[b_muons_n] = 0;
+    b_muons_sta_pt[b_muons_n] = b_muons_sta_eta[b_muons_n] = b_muons_sta_phi[b_muons_n] = b_muons_sta_ptErr[b_muons_n] = 0;
+
+    b_muons_glb_hits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
+    b_muons_glb_DTHits_n[b_muons_n] = b_muons_glb_CSCHits_n[b_muons_n] = 0;
+    b_muons_glb_RPCHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
+    b_muons_glb_GEMHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
+
+    b_muons_sta_hits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
+    b_muons_sta_DTHits_n[b_muons_n] = b_muons_sta_CSCHits_n[b_muons_n] = 0;
+    b_muons_sta_RPCHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
+    b_muons_sta_GEMHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
 
     if ( true ) {
       auto track = muonRef->muonBestTrack();
@@ -389,15 +403,7 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
       b_muons_ME0Hits_n[b_muons_n] = hitPattern.numberOfValidMuonME0Hits();
     }
  
-    if ( !muonRef->isGlobalMuon() ) {
-      b_muons_glb_pt[b_muons_n] = b_muons_glb_eta[b_muons_n] = b_muons_glb_phi[b_muons_n] = b_muons_glb_ptErr[b_muons_n] = 0;
-
-      b_muons_glb_hits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
-      b_muons_glb_DTHits_n[b_muons_n] = b_muons_glb_CSCHits_n[b_muons_n] = 0;
-      b_muons_glb_RPCHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
-      b_muons_glb_GEMHits_n[b_muons_n] = b_muons_glb_muonHits_n[b_muons_n] = 0;
-    }
-    else {
+    if ( muonRef->isGlobalMuon() ) {
       auto track = muonRef->combinedMuon();
       b_muons_glb_pt[b_muons_n] = track->pt();
       b_muons_glb_eta[b_muons_n] = track->eta();
@@ -421,14 +427,7 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
       b_muons_glb_ME0Hits_n[b_muons_n] = hitPattern.numberOfValidMuonME0Hits();
     }
 
-    if ( !muonRef->isStandAloneMuon() ) {
-      b_muons_sta_pt[b_muons_n] = b_muons_sta_eta[b_muons_n] = b_muons_sta_phi[b_muons_n] = b_muons_sta_ptErr[b_muons_n] = 0;
-      b_muons_sta_hits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
-      b_muons_sta_DTHits_n[b_muons_n] = b_muons_sta_CSCHits_n[b_muons_n] = 0;
-      b_muons_sta_RPCHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
-      b_muons_sta_GEMHits_n[b_muons_n] = b_muons_sta_muonHits_n[b_muons_n] = 0;
-    }
-    else {
+    if ( muonRef->isStandAloneMuon() ) {
       auto track = muonRef->standAloneMuon();
       b_muons_sta_pt[b_muons_n] = track->pt();
       b_muons_sta_eta[b_muons_n] = track->eta();
