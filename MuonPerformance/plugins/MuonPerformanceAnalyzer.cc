@@ -327,6 +327,11 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
 
         std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
         const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
+        if ( b_muons_rpcTime1[b_muons_n] == -1e5 ) {
+          const double sumTime = std::accumulate(rpcHits.begin(), rpcHits.end(), 0.0,
+              [](double t, const RPCHitInfo h){return h.t == 0.0 ? t : t+h.t;}); // to be removed for >= 911p1
+          b_muons_rpcTime1[b_muons_n] = rpcHits.empty() ? 0 : sumTime/rpcHits.size();
+        }
 
         auto hitPattern = track->hitPattern();
         b_muons_sta_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
@@ -436,6 +441,11 @@ void MuonPerformanceAnalyzer::analyze(const edm::Event& event, const edm::EventS
 
       std::vector<RPCHitInfo> rpcHits = collectRPCHits(rpcGeom.product(), track, rpcHitsHandle.product());
       const int nIRPCHits = std::accumulate(rpcHits.begin(), rpcHits.end(), 0, [](int n, const RPCHitInfo h){return h.isIRPC ? n+1 : n;});
+      if ( b_muons_rpcTime1[b_muons_n] == -1e5 ) {
+        const double sumTime = std::accumulate(rpcHits.begin(), rpcHits.end(), 0.0,
+            [](double t, const RPCHitInfo h){return h.t == 0.0 ? t : t+h.t;}); // to be removed for >= 911p1
+        b_muons_rpcTime1[b_muons_n] = rpcHits.empty() ? 0 : sumTime/rpcHits.size();
+      }
 
       auto hitPattern = track->hitPattern();
       b_muons_sta_hits_n[b_muons_n] = hitPattern.numberOfValidHits();
