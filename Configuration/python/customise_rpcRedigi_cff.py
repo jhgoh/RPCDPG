@@ -8,9 +8,11 @@ def customise_rpcRedigi(process):
     process.simMuonRPCReDigis.digiModelConfig = process.simMuonRPCDigis.digiModelConfig.clone(
         IRPC_time_resolution = cms.double(1.5),
         IRPC_electronics_jitter = cms.double(0.1),
+        linkGateWidth = cms.double(25.0),
     )
     process.simMuonRPCReDigis.digiIRPCModelConfig = process.simMuonRPCReDigis.digiModelConfig.clone(
         IRPC_time_resolution = cms.double(1.0),
+        linkGateWidth = cms.double(25.0),
         do_Y_coordinate = cms.bool(True),
     )
     process.simMuonRPCReDigis.digiModel = cms.string('RPCSimModelTiming')
