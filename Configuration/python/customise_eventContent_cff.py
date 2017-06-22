@@ -8,6 +8,7 @@ def customise_eventContent(process):
         "keep *_genParticles_*_*",
         "keep *_g4SimHits_MuonRPCHits_*",
         "keep *_simMuonRPCDigis_*_*",
+        "keep *_simMuonRPCReDigis_*_*",
         "keep *_muons__*",
         "keep *_rpcRecHits_*_*",
     ]
