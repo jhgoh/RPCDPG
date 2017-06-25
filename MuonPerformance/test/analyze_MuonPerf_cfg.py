@@ -35,14 +35,22 @@ process.muonPerf.tpSelector.maxRapidity = 3.0
 process.muonPerf.tpSelector.minRapidity = -3.0
 process.muonPerf.tpSelector.pdgId = cms.vint32(13,-13)
 
+process.rpcDet = cms.EDAnalyzer("MuonRPCAnalyzer",
+    rpcRecHits = cms.InputTag("rpcRecHits"),
+    rpcSimDigis = cms.InputTag("simMuonRPCReDigis", "RPCDigiSimLink"),
+    muons = cms.InputTag("muons"),
+    vertices = cms.InputTag("offlinePrimaryVertices"),
+    genParticles = cms.InputTag("genParticles"),
+)
+
 process.TFileService = cms.Service("TFileService", fileName = cms.string("ntuple.root"))
 
 process.p = cms.Path(
     process.muonAssociatorByHitsHelper + process.muonPerf
+  + process.rpcDet
 )
 
 process.source.fileNames = [
-    'file:/xrootd/store/relval/CMSSW_9_1_1/RelValZMM_14/GEN-SIM-RECO/91X_upgrade2023_realistic_v1_D17-v1/10000/14A91939-1D3F-E711-A09A-0025905A610A.root',
-#    'file:/xrootd/store/relval/CMSSW_9_1_1/RelValZMM_14/GEN-SIM-RECO/PU25ns_91X_upgrade2023_realistic_v1_D17PU200-v1/10000/00232D4E-E83F-E711-8DB1-0025905B859A.root',
+    '/store/user/jhgoh/RPCUpgrade/20170623_1/step3_redigi_SingleMuPt100_n96_no2D/step3_000.root',
 ]
 
