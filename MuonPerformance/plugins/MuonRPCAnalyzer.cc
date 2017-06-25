@@ -55,8 +55,6 @@
 
 using namespace std;
 
-typedef std::pair<std::array<double, 3>, int> HitInfo;
-
 class MuonRPCAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
 public:
@@ -66,82 +64,79 @@ public:
   void analyze(const edm::Event& event, const edm::EventSetup& eventSetup) override;
 
 private:
-  edm::EDGetTokenT<reco::GenParticleCollection> genParticleToken_;
+  edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken_;
   //edm::EDGetTokenT<edm::SimVertexContainer> simVertexToken_;
-  edm::EDGetTokenT<RPCDigiCollection> rpcDigisToken_;
+  //edm::EDGetTokenT<RPCDigiCollection> rpcDigisToken_;
   edm::EDGetTokenT<edm::DetSetVector<RPCDigiSimLink>> rpcSimDigisToken_;
 
   edm::EDGetTokenT<RPCRecHitCollection> rpcRecHitsToken_;
   //edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken_;
   //edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken_;
   //edm::EDGetTokenT<GEMSegmentCollection> gemSegmentsToken_;
-  edm::EDGetTokenT<reco::MuonCollection> muonToken_;
-  edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
+
+  edm::EDGetTokenT<reco::MuonCollection> muonsToken_;
+  edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
 
 public:
-  TH1D* hStripProfile_;
-  TH1D* hCLs_;
-  TH1D* hXerr_, * hYerr_;
-  TH1D* hDR_, * hDPt_;
-  TH2D* hDPt_abseta_;
+  TTree* tree_;
 
-  TH1D* hDPtSta_, * hDPtGlb_;
+  const static unsigned int rpcDet_N = 5000;
+  unsigned int b_rpcDet_n;
+  bool b_rpcDet_isBarrel[rpcDet_N], b_rpcDet_isIRPC[rpcDet_N];
+  short b_rpcDet_wheel[rpcDet_N], b_rpcDet_disk[rpcDet_N];
+  unsigned short b_rpcDet_station[rpcDet_N];
+  short b_rpcDet_ring[rpcDet_N];
+  unsigned short b_rpcDet_sector[rpcDet_N], b_rpcDet_layer[rpcDet_N], b_rpcDet_roll[rpcDet_N];
+  unsigned short b_rpcDet_nHit[rpcDet_N], b_rpcDet_nSimHit[rpcDet_N];
+  unsigned short b_rpcDet_nOverlap[rpcDet_N];
 
-  TH1D* hNSimHitInRoll_, * hNDigiInRoll_, * hNRecHitInRoll_;
-  TH2D* hNSimHitVsNRecHitInRoll_;
 };
 
 MuonRPCAnalyzer::MuonRPCAnalyzer(const edm::ParameterSet& pset):
-  genParticleToken_(consumes<reco::GenParticleCollection>(pset.getParameter<edm::InputTag>("genParticle"))),
+  genParticlesToken_(consumes<reco::GenParticleCollection>(pset.getParameter<edm::InputTag>("genParticles"))),
   //simVertexToken_(consumes<edm::SimVertexContainer>(pset.getParameter<edm::InputTag>("simVertex"))),
   //rpcSimHitsToken_(consumes<edm::PSimHitContainer>(pset.getParameter<edm::InputTag>("rpcSimHits"))),
-  rpcDigisToken_(consumes<RPCDigiCollection>(pset.getParameter<edm::InputTag>("rpcDigis"))),
+  //rpcDigisToken_(consumes<RPCDigiCollection>(pset.getParameter<edm::InputTag>("rpcDigis"))),
   rpcSimDigisToken_(consumes<edm::DetSetVector<RPCDigiSimLink>>(pset.getParameter<edm::InputTag>("rpcSimDigis"))),
   rpcRecHitsToken_(consumes<RPCRecHitCollection>(pset.getParameter<edm::InputTag>("rpcRecHits"))),
   //dtSegmentsToken_(consumes<DTRecSegment4DCollection>(pset.getParameter<edm::InputTag>("dtSegments"))),
   //cscSegmentsToken_(consumes<CSCSegmentCollection>(pset.getParameter<edm::InputTag>("cscSegments"))),
   //gemSegmentsToken_(consumes<GEMSegmentCollection>(pset.getParameter<edm::InputTag>("gemSegments"))),
-  muonToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
-  vertexToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertex")))
+  muonsToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
+  verticesToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertices")))
 {
   usesResource("TFileService");
   edm::Service<TFileService> fs;
 
-  hStripProfile_ = fs->make<TH1D>("hStripProfile", "Strip profile;Strip;Entries", 200, 0, 200);
-  hCLs_ = fs->make<TH1D>("hCLs", "Cluster size;Cluster size;Entries", 10, 0, 10);
-  hXerr_ = fs->make<TH1D>("hXerr", "x error;x error (cm);Entries", 100, -10, 10);
-  hYerr_ = fs->make<TH1D>("hYerr", "y error;y error (cm);Entries", 100, -10, 10);
+  tree_ = fs->make<TTree>("tree", "tree");
+  tree_->Branch("rpcDet_n", &b_rpcDet_n, "rpcDet_n/s");
+  tree_->Branch("rpcDet_isBarrel", b_rpcDet_isBarrel, "rpcDet_isBarrel[rpcDet_n]/O");
+  tree_->Branch("rpcDet_isIRPC"  , b_rpcDet_isIRPC  , "rpcDet_isIRPC[rpcDet_n]/O"  );
+  tree_->Branch("rpcDet_wheel"   , b_rpcDet_wheel   , "rpcDet_wheel[rpcDet_n]/S"   );
+  tree_->Branch("rpcDet_disk"    , b_rpcDet_disk    , "rpcDet_disk[rpcDet_n]/S"    );
+  tree_->Branch("rpcDet_station" , b_rpcDet_station , "rpcDet_station[rpcDet_n]/s" );
+  tree_->Branch("rpcDet_ring"    , b_rpcDet_ring    , "rpcDet_ring[rpcDet_n]/s"    );
+  tree_->Branch("rpcDet_sector"  , b_rpcDet_sector  , "rpcDet_sector[rpcDet_n]/s"  );
+  tree_->Branch("rpcDet_layer"   , b_rpcDet_layer   , "rpcDet_layer[rpcDet_n]/s"   );
+  tree_->Branch("rpcDet_roll"    , b_rpcDet_roll    , "rpcDet_roll[rpcDet_n]/s"    );
+  tree_->Branch("rpcDet_nHit"    , b_rpcDet_nHit    , "rpcDet_nHit[rpcDet_n]/s"    );
+  tree_->Branch("rpcDet_nSimHit" , b_rpcDet_nSimHit , "rpcDet_nSimHit[rpcDet_n]/s" );
+  tree_->Branch("rpcDet_nOverlap", b_rpcDet_nOverlap, "rpcDet_nOverlap[rpcDet_n]/s");
 
-  hDR_ = fs->make<TH1D>("hDR", "#DeltaR;#DeltaR;Entries", 100, 0, 0.5);
-
-  hDPt_ = fs->make<TH1D>("hDPt", "#Deltap_{T};#Deltap_{T}/p_{T};Entries", 100, -0.2, 0.2);
-  hDPtSta_ = fs->make<TH1D>("hDPtSta", "Standalone muon #Deltap_{T};#Deltap_{T}/p_{T};Entries", 100, -1, 1);
-  hDPtGlb_ = fs->make<TH1D>("hDPtGlb", "Global muon #Deltap_{T};#Deltap_{T}/p_{T};Entries", 100, -0.2, 0.2);
-  hDPt_abseta_ = fs->make<TH2D>("hDPt_abseta", "#Deltap_{T}/p_{T};|#eta|;Entries", 100, 0, 2.5, 100, -0.2, 0.2);
-
-  hNSimHitInRoll_ = fs->make<TH1D>("hNSimHitInRoll", "SimHit multiplicity in a roll (unique trackId)", 20, 0, 20);
-  hNDigiInRoll_ = fs->make<TH1D>("hNDigiInRoll", "Digi multiplicity in a roll", 20, 0, 20);
-  hNRecHitInRoll_ = fs->make<TH1D>("hNRecHitInRoll", "RecHit multiplicity in a roll", 20, 0, 20);
-
-  hNSimHitVsNRecHitInRoll_ = fs->make<TH2D>("hNSimHitVsNRecHitInRoll", "SimHit multiplicity vs RecHit multiplicity in a roll;SimHit multiplicity;RecHit multiplicity", 10, 0, 10, 10, 0, 10);
 }
 
 void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& eventSetup)
 {
-  edm::Handle<reco::GenParticleCollection> genParticleHandle;
-  event.getByToken(genParticleToken_, genParticleHandle);
+  b_rpcDet_n = 0;
+
+  edm::Handle<reco::GenParticleCollection> genParticlesHandle;
+  event.getByToken(genParticlesToken_, genParticlesHandle);
 
   edm::Handle<RPCRecHitCollection> rpcRecHitsHandle;
   event.getByToken(rpcRecHitsToken_, rpcRecHitsHandle);
 
-  edm::Handle<RPCDigiCollection> rpcDigisHandle;
-  event.getByToken(rpcDigisToken_, rpcDigisHandle);
-
-  edm::Handle<reco::MuonCollection> muonHandle;
-  event.getByToken(muonToken_, muonHandle);
-
-  edm::Handle<reco::VertexCollection> vertexHandle;
-  event.getByToken(vertexToken_, vertexHandle);
+  edm::Handle<reco::VertexCollection> verticesHandle;
+  event.getByToken(verticesToken_, verticesHandle);
 
   edm::Handle<edm::DetSetVector<RPCDigiSimLink>> rpcSimDigisHandle;
   event.getByToken(rpcSimDigisToken_, rpcSimDigisHandle);
@@ -161,44 +156,53 @@ void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
   }
 
   for ( const auto roll : rpcGeom->rolls() ) {
-    if ( !roll->isIRPC() ) continue;
+    const RPCDetId rpcId = roll->id();
 
-    const auto digiRange = rpcDigisHandle->get(roll->id());
-    const int nDigi = digiRange.second-digiRange.first;
-    for ( auto idigi = digiRange.first; idigi != digiRange.second; ++idigi ) {
-      const int strip = idigi->strip();
-      hStripProfile_->Fill(strip);
+    b_rpcDet_isBarrel[b_rpcDet_n] = (rpcId.region() == 0);
+    b_rpcDet_isIRPC[b_rpcDet_n] = roll->isIRPC();
+    if ( b_rpcDet_isBarrel[b_rpcDet_n] ) {
+      b_rpcDet_wheel[b_rpcDet_n] = rpcId.ring();
+      b_rpcDet_station[b_rpcDet_n] = rpcId.station();
+      b_rpcDet_disk[b_rpcDet_n] = b_rpcDet_ring[b_rpcDet_n] = 0;
     }
-    if ( nDigi > 0 ) hNDigiInRoll_->Fill(nDigi);
-
+    else {
+      b_rpcDet_wheel[b_rpcDet_n] = b_rpcDet_station[b_rpcDet_n] = 0;
+      b_rpcDet_disk[b_rpcDet_n] = rpcId.region()*rpcId.station();
+      b_rpcDet_ring[b_rpcDet_n] = rpcId.ring();
+    }
+    b_rpcDet_sector[b_rpcDet_n] = rpcId.sector();
+    b_rpcDet_layer[b_rpcDet_n] = rpcId.layer();
+    b_rpcDet_roll[b_rpcDet_n] = rpcId.roll();
+    
     const auto hitRange = rpcRecHitsHandle->get(roll->id());
-    const int nRecHit = hitRange.second-hitRange.first;
-    for ( auto ihit = hitRange.first; ihit != hitRange.second; ++ihit ) {
-      hCLs_->Fill(ihit->clusterSize());
-      hXerr_->Fill(sqrt(max(0.F, ihit->localPositionError().xx())));
-      hYerr_->Fill(sqrt(max(0.F, ihit->localPositionError().yy())));
-    }
-    if ( nRecHit > 0 ) hNRecHitInRoll_->Fill(nRecHit);
+    const unsigned int nRecHit = hitRange.second-hitRange.first;
+    b_rpcDet_nHit[b_rpcDet_n] = nRecHit;
+    //for ( auto ihit = hitRange.first; ihit != hitRange.second; ++ihit ) {
+    //  hCLs_->Fill(ihit->clusterSize());
+    //  hXerr_->Fill(sqrt(max(0.F, ihit->localPositionError().xx())));
+    //  hYerr_->Fill(sqrt(max(0.F, ihit->localPositionError().yy())));
+    //}
 
-    std::map<unsigned int, unsigned int> nSimDigiByTrackId;
+    b_rpcDet_nSimHit[b_rpcDet_n] = b_rpcDet_nOverlap[b_rpcDet_n] = 0;
     if ( detTrackToSimDigiMap.find(roll->id()) != detTrackToSimDigiMap.end() ) {
-      const auto& rpcSimDigis = detTrackToSimDigiMap[roll->id()];
+      std::set<unsigned int> simTrackIds;
+      const auto& rpcSimDigis = detTrackToSimDigiMap[rpcId.rawId()];
+      std::vector<unsigned int> stripProfile(roll->nstrips());
       for ( auto& simDigi : rpcSimDigis ) {
         const unsigned int trackId = simDigi.getTrackId();
-        if ( nSimDigiByTrackId.find(trackId) == nSimDigiByTrackId.end() ) {
-          nSimDigiByTrackId[trackId] = 0;
-        }
-        else {
-          ++nSimDigiByTrackId[trackId];
-        }
+        simTrackIds.insert(trackId);
+        ++stripProfile[simDigi.getStrip()-1];
       }
+      for ( auto n : stripProfile ) {
+        if ( n > 1 ) ++b_rpcDet_nOverlap[b_rpcDet_n];
+      }
+      b_rpcDet_nSimHit[b_rpcDet_n] = simTrackIds.size();
     }
-    const int nSimDigi = nSimDigiByTrackId.size();
-    if ( nSimDigi > 0 ) hNSimHitInRoll_->Fill(nSimDigi);
 
-    hNSimHitVsNRecHitInRoll_->Fill(nSimDigi, nRecHit);
+    ++b_rpcDet_n;
   }
 
+/*
   std::vector<const reco::GenParticle*> genMuons;
   for ( const auto& p : *genParticleHandle ) {
     if ( std::abs(p.pdgId()) != 13 ) continue;
@@ -239,6 +243,7 @@ void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
       }
     }
   }
+*/
 
 /*
   if ( muonHandle.isValid() and vertexHandle.isValid() and rpcRecHitsHandle.isValid() ) {
@@ -303,7 +308,7 @@ void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
   }
 */
 
-//  tree_->Fill();
+  tree_->Fill();
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
