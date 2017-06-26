@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: step3 --conditions auto:phase2_realistic -n -1 --era Phase2C2 --eventcontent AODSIM --runUnscheduled -s RAW2DIGI,L1Reco,RECO,PAT,VALIDATION:@phase2Validation+@miniAODValidation,DQM:@phase2+@miniAODDQM --datatier GEN-SIM-RECO --geometry Extended2023D12 --filein file:step2.root --fileout file:step3.root --no_exec --customise RPCUpgrade/Configuration/customise_rpcRedigi_cff.customise_rpcRedigi,RPCUpgrade/Configuration/customise_eventContent_cff.customise_eventContent --python_filename step3_redigi_cfg.py
+# with command line options: step3 --conditions auto:phase2_realistic -n -1 --era Phase2C2 --eventcontent AODSIM --runUnscheduled -s RAW2DIGI,L1Reco,RECO,PAT,VALIDATION:@phase2Validation+@miniAODValidation,DQM:@phase2+@miniAODDQM --datatier GEN-SIM-RECO --geometry Extended2023D12 --filein file:step2.root --fileout step3.root --no_exec --customise RPCUpgrade/Configuration/customise_rpcRedigi_cff.customise_rpcRedigi,RPCUpgrade/Configuration/customise_eventContent_cff.customise_eventContent,RPCUpgrade/Configuration/customise_muonAssoc_cff.customise_muonAssoc --python_filename step3_redigi_cfg.py
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -15,7 +15,7 @@ process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
-process.load('Configuration.Geometry.GeometryExtended2023D12Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17Reco_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.RawToDigi_cff')
 process.load('Configuration.StandardSequences.L1Reco_cff')
@@ -147,6 +147,12 @@ from RPCUpgrade.Configuration.customise_eventContent_cff import customise_eventC
 
 #call to customisation function customise_eventContent imported from RPCUpgrade.Configuration.customise_eventContent_cff
 process = customise_eventContent(process)
+
+# Automatic addition of the customisation function from RPCUpgrade.Configuration.customise_muonAssoc_cff
+from RPCUpgrade.Configuration.customise_muonAssoc_cff import customise_muonAssoc 
+
+#call to customisation function customise_muonAssoc imported from RPCUpgrade.Configuration.customise_muonAssoc_cff
+process = customise_muonAssoc(process)
 
 # Automatic addition of the customisation function from SimGeneral.MixingModule.fullMixCustomize_cff
 from SimGeneral.MixingModule.fullMixCustomize_cff import setCrossingFrameOn 

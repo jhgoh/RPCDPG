@@ -22,7 +22,6 @@ process.muonAssociatorByHitsHelper.pixelSimLinkSrc = cms.InputTag("simSiPixelDig
 process.muonAssociatorByHitsHelper.stripSimLinkSrc = cms.InputTag("simSiPixelDigis:Tracker")
 
 from Validation.RecoMuon.selectors_cff import muonTPSet
-
 process.muonPerf = cms.EDAnalyzer("MuonPerformanceAnalyzer",
     rpcHits = cms.InputTag("rpcRecHits"),
     muons = cms.InputTag("muons"),
@@ -54,3 +53,4 @@ process.source.fileNames = [
     '/store/user/jhgoh/RPCUpgrade/20170623_1/step3_redigi_SingleMuPt100_n96_no2D/step3_000.root',
 ]
 
+process.options.SkipEvent = cms.untracked.vstring('ProductNotFound')
