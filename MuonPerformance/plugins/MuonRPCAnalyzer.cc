@@ -78,7 +78,7 @@ private:
   edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
 
 public:
-  TTree* tree_;
+  TTree* detTree_, * hitTree_;
 
   const static unsigned int rpcDet_N = 5000;
   unsigned int b_rpcDet_n;
@@ -89,6 +89,19 @@ public:
   unsigned short b_rpcDet_sector[rpcDet_N], b_rpcDet_layer[rpcDet_N], b_rpcDet_roll[rpcDet_N];
   unsigned short b_rpcDet_nHit[rpcDet_N], b_rpcDet_nSimHit[rpcDet_N];
   unsigned short b_rpcDet_nOverlap[rpcDet_N];
+
+  const static unsigned int rpcHit_N = 1000;
+  unsigned int b_rpcHit_n;
+  bool b_rpcHit_isBarrel[rpcHit_N], b_rpcHit_isIRPC[rpcHit_N];
+  short b_rpcHit_wheel[rpcHit_N], b_rpcHit_disk[rpcHit_N];
+  unsigned short b_rpcHit_station[rpcHit_N];
+  short b_rpcHit_ring[rpcHit_N];
+  unsigned short b_rpcHit_sector[rpcHit_N], b_rpcHit_layer[rpcHit_N], b_rpcHit_roll[rpcHit_N];
+  unsigned short b_rpcHit_cls[rpcHit_N], b_rpcHit_bx[rpcHit_N];
+  float b_rpcHit_time[rpcHit_N];
+  float b_rpcHit_lx[rpcHit_N], b_rpcHit_ly[rpcHit_N];
+  float b_rpcHit_gx[rpcHit_N], b_rpcHit_gy[rpcHit_N], b_rpcHit_gz[rpcHit_N];
+  float b_simHit_dx[rpcHit_N], b_simHit_dy[rpcHit_N], b_simHit_dt[rpcHit_N];
 
 };
 
@@ -108,26 +121,49 @@ MuonRPCAnalyzer::MuonRPCAnalyzer(const edm::ParameterSet& pset):
   usesResource("TFileService");
   edm::Service<TFileService> fs;
 
-  tree_ = fs->make<TTree>("tree", "tree");
-  tree_->Branch("rpcDet_n", &b_rpcDet_n, "rpcDet_n/s");
-  tree_->Branch("rpcDet_isBarrel", b_rpcDet_isBarrel, "rpcDet_isBarrel[rpcDet_n]/O");
-  tree_->Branch("rpcDet_isIRPC"  , b_rpcDet_isIRPC  , "rpcDet_isIRPC[rpcDet_n]/O"  );
-  tree_->Branch("rpcDet_wheel"   , b_rpcDet_wheel   , "rpcDet_wheel[rpcDet_n]/S"   );
-  tree_->Branch("rpcDet_disk"    , b_rpcDet_disk    , "rpcDet_disk[rpcDet_n]/S"    );
-  tree_->Branch("rpcDet_station" , b_rpcDet_station , "rpcDet_station[rpcDet_n]/s" );
-  tree_->Branch("rpcDet_ring"    , b_rpcDet_ring    , "rpcDet_ring[rpcDet_n]/s"    );
-  tree_->Branch("rpcDet_sector"  , b_rpcDet_sector  , "rpcDet_sector[rpcDet_n]/s"  );
-  tree_->Branch("rpcDet_layer"   , b_rpcDet_layer   , "rpcDet_layer[rpcDet_n]/s"   );
-  tree_->Branch("rpcDet_roll"    , b_rpcDet_roll    , "rpcDet_roll[rpcDet_n]/s"    );
-  tree_->Branch("rpcDet_nHit"    , b_rpcDet_nHit    , "rpcDet_nHit[rpcDet_n]/s"    );
-  tree_->Branch("rpcDet_nSimHit" , b_rpcDet_nSimHit , "rpcDet_nSimHit[rpcDet_n]/s" );
-  tree_->Branch("rpcDet_nOverlap", b_rpcDet_nOverlap, "rpcDet_nOverlap[rpcDet_n]/s");
+  detTree_ = fs->make<TTree>("rpcDet", "rpcDet");
+  detTree_->Branch("n", &b_rpcDet_n, "n/s");
+  detTree_->Branch("isBarrel", b_rpcDet_isBarrel, "isBarrel[n]/O");
+  detTree_->Branch("isIRPC"  , b_rpcDet_isIRPC  , "isIRPC[n]/O"  );
+  detTree_->Branch("wheel"   , b_rpcDet_wheel   , "wheel[n]/S"   );
+  detTree_->Branch("disk"    , b_rpcDet_disk    , "disk[n]/S"    );
+  detTree_->Branch("station" , b_rpcDet_station , "station[n]/s" );
+  detTree_->Branch("ring"    , b_rpcDet_ring    , "ring[n]/s"    );
+  detTree_->Branch("sector"  , b_rpcDet_sector  , "sector[n]/s"  );
+  detTree_->Branch("layer"   , b_rpcDet_layer   , "layer[n]/s"   );
+  detTree_->Branch("roll"    , b_rpcDet_roll    , "roll[n]/s"    );
+  detTree_->Branch("nHit"    , b_rpcDet_nHit    , "nHit[n]/s"    );
+  detTree_->Branch("nSimHit" , b_rpcDet_nSimHit , "nSimHit[n]/s" );
+  detTree_->Branch("nOverlap", b_rpcDet_nOverlap, "nOverlap[n]/s");
+
+  hitTree_ = fs->make<TTree>("rpcHit", "rpcHit");
+  hitTree_->Branch("n", &b_rpcHit_n, "n/s");
+  hitTree_->Branch("isBarrel", b_rpcHit_isBarrel, "isBarrel[n]/O");
+  hitTree_->Branch("isIRPC"  , b_rpcHit_isIRPC  , "isIRPC[n]/O"  );
+  hitTree_->Branch("wheel"   , b_rpcHit_wheel   , "wheel[n]/S"   );
+  hitTree_->Branch("disk"    , b_rpcHit_disk    , "disk[n]/S"    );
+  hitTree_->Branch("station" , b_rpcHit_station , "station[n]/s" );
+  hitTree_->Branch("ring"    , b_rpcHit_ring    , "ring[n]/s"    );
+  hitTree_->Branch("sector"  , b_rpcHit_sector  , "sector[n]/s"  );
+  hitTree_->Branch("layer"   , b_rpcHit_layer   , "layer[n]/s"   );
+  hitTree_->Branch("roll"    , b_rpcHit_roll    , "roll[n]/s"    );
+  hitTree_->Branch("cls", b_rpcHit_cls, "cls[n]/s");
+  hitTree_->Branch("bx", b_rpcHit_bx, "bx[n]/s");
+  hitTree_->Branch("time", b_rpcHit_time, "time[n]/F");
+  hitTree_->Branch("lx" , b_rpcHit_lx, "lx[n]/F" );
+  hitTree_->Branch("ly" , b_rpcHit_ly, "ly[n]/F" );
+  hitTree_->Branch("gx" , b_rpcHit_gx, "gx[n]/F" );
+  hitTree_->Branch("gy" , b_rpcHit_gy, "gy[n]/F" );
+  hitTree_->Branch("gz" , b_rpcHit_gz, "gz[n]/F" );
+  hitTree_->Branch("dx" , b_simHit_dx, "dx[n]/F" );
+  hitTree_->Branch("dy" , b_simHit_dy, "dy[n]/F" );
+  hitTree_->Branch("dt" , b_simHit_dt, "dt[n]/F" );
 
 }
 
 void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& eventSetup)
 {
-  b_rpcDet_n = 0;
+  b_rpcDet_n = b_rpcHit_n = 0;
 
   edm::Handle<reco::GenParticleCollection> genParticlesHandle;
   event.getByToken(genParticlesToken_, genParticlesHandle);
@@ -157,6 +193,7 @@ void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
 
   for ( const auto roll : rpcGeom->rolls() ) {
     const RPCDetId rpcId = roll->id();
+    const double tof0 = roll->toGlobal(LocalPoint(0,0,0)).mag()/30;
 
     b_rpcDet_isBarrel[b_rpcDet_n] = (rpcId.region() == 0);
     b_rpcDet_isIRPC[b_rpcDet_n] = roll->isIRPC();
@@ -174,141 +211,102 @@ void MuonRPCAnalyzer::analyze(const edm::Event& event, const edm::EventSetup& ev
     b_rpcDet_layer[b_rpcDet_n] = rpcId.layer();
     b_rpcDet_roll[b_rpcDet_n] = rpcId.roll();
     
-    const auto hitRange = rpcRecHitsHandle->get(roll->id());
-    const unsigned int nRecHit = hitRange.second-hitRange.first;
-    b_rpcDet_nHit[b_rpcDet_n] = nRecHit;
-    //for ( auto ihit = hitRange.first; ihit != hitRange.second; ++ihit ) {
-    //  hCLs_->Fill(ihit->clusterSize());
-    //  hXerr_->Fill(sqrt(max(0.F, ihit->localPositionError().xx())));
-    //  hYerr_->Fill(sqrt(max(0.F, ihit->localPositionError().yy())));
-    //}
-
+    // Fill simDigis and find cluster first
+    // Find overlaping simHit and fill them
     b_rpcDet_nSimHit[b_rpcDet_n] = b_rpcDet_nOverlap[b_rpcDet_n] = 0;
+    struct HitInfo { unsigned int n; unsigned int strip1, strip2; float sumX, sumY, sumToF; };
+    std::map<unsigned int, HitInfo> simTrackIdToStripRange;
     if ( detTrackToSimDigiMap.find(roll->id()) != detTrackToSimDigiMap.end() ) {
-      std::set<unsigned int> simTrackIds;
       const auto& rpcSimDigis = detTrackToSimDigiMap[rpcId.rawId()];
       std::vector<unsigned int> stripProfile(roll->nstrips());
       for ( auto& simDigi : rpcSimDigis ) {
         const unsigned int trackId = simDigi.getTrackId();
-        simTrackIds.insert(trackId);
+        const unsigned int strip = simDigi.getStrip();
+        auto key = simTrackIdToStripRange.find(trackId);
+        if ( key == simTrackIdToStripRange.end() ) {
+          simTrackIdToStripRange[trackId] = {
+            1, strip, strip,
+            simDigi.getEntryPoint().x(), simDigi.getEntryPoint().y(), simDigi.getTimeOfFlight()
+          };
+        }
+        else {
+          ++key->second.n;
+          key->second.strip1 = std::min(key->second.strip1, strip);
+          key->second.strip2 = std::max(key->second.strip2, strip);
+          key->second.sumX += simDigi.getEntryPoint().x();
+          key->second.sumY += simDigi.getEntryPoint().y();
+          key->second.sumToF += simDigi.getTimeOfFlight();
+        }
         ++stripProfile[simDigi.getStrip()-1];
       }
       for ( auto n : stripProfile ) {
         if ( n > 1 ) ++b_rpcDet_nOverlap[b_rpcDet_n];
       }
-      b_rpcDet_nSimHit[b_rpcDet_n] = simTrackIds.size();
+      b_rpcDet_nSimHit[b_rpcDet_n] = simTrackIdToStripRange.size();
+    }
+
+    const auto hitRange = rpcRecHitsHandle->get(roll->id());
+    const unsigned int nRecHit = hitRange.second-hitRange.first;
+    b_rpcDet_nHit[b_rpcDet_n] = nRecHit;
+    for ( auto ihit = hitRange.first; ihit != hitRange.second; ++ihit ) {
+      b_rpcHit_isBarrel[b_rpcHit_n] = (rpcId.region() == 0);
+      b_rpcHit_isIRPC[b_rpcHit_n] = roll->isIRPC();
+      if ( b_rpcHit_isBarrel[b_rpcHit_n] ) {
+        b_rpcHit_wheel[b_rpcHit_n] = rpcId.ring();
+        b_rpcHit_station[b_rpcHit_n] = rpcId.station();
+        b_rpcHit_disk[b_rpcHit_n] = b_rpcHit_ring[b_rpcHit_n] = 0;
+      }
+      else {
+        b_rpcHit_wheel[b_rpcHit_n] = b_rpcHit_station[b_rpcHit_n] = 0;
+        b_rpcHit_disk[b_rpcHit_n] = rpcId.region()*rpcId.station();
+        b_rpcHit_ring[b_rpcHit_n] = rpcId.ring();
+      }
+      b_rpcHit_sector[b_rpcHit_n] = rpcId.sector();
+      b_rpcHit_layer[b_rpcHit_n] = rpcId.layer();
+      b_rpcHit_roll[b_rpcHit_n] = rpcId.roll();
+
+      b_rpcHit_cls[b_rpcHit_n] = ihit->clusterSize();
+      b_rpcHit_bx[b_rpcHit_n] = ihit->BunchX();
+      b_rpcHit_time[b_rpcHit_n] = ihit->time();
+      const auto lp = ihit->localPosition();
+      b_rpcHit_lx[b_rpcHit_n] = lp.x();
+      b_rpcHit_ly[b_rpcHit_n] = lp.y();
+      const auto gp = roll->toGlobal(lp);
+      b_rpcHit_gx[b_rpcHit_n] = gp.x();
+      b_rpcHit_gy[b_rpcHit_n] = gp.y();
+      b_rpcHit_gz[b_rpcHit_n] = gp.z();
+
+      b_simHit_dx[b_rpcHit_n] = b_simHit_dy[b_rpcHit_n] = b_simHit_dt[b_rpcHit_n] = -1e5;
+      for ( auto itr = simTrackIdToStripRange.begin(); itr != simTrackIdToStripRange.end(); ++itr ) {
+        //const unsigned int trkId = itr->first;
+        const int strip1 = itr->second.strip1;
+        const int strip2 = itr->second.strip2;
+        if ( strip1 > ihit->firstClusterStrip()+ihit->clusterSize() ) continue;
+        if ( strip2 < ihit->firstClusterStrip() ) continue;
+
+        b_simHit_dx[b_rpcHit_n] = lp.x() - itr->second.sumX/itr->second.n;
+        b_simHit_dy[b_rpcHit_n] = lp.y() - itr->second.sumY/itr->second.n;
+        b_simHit_dt[b_rpcHit_n] = ihit->time() - (itr->second.sumToF/itr->second.n - tof0);
+
+        break;
+      }
+      if ( detTrackToSimDigiMap.find(roll->id()) != detTrackToSimDigiMap.end() ) {
+        std::set<unsigned int> simTrackIds;
+        const auto& rpcSimDigis = detTrackToSimDigiMap[rpcId.rawId()];
+        for ( auto& simDigi : rpcSimDigis ) {
+          const unsigned int trackId = simDigi.getTrackId();
+          simTrackIds.insert(trackId);
+        }
+      }
+
+      ++b_rpcHit_n;
     }
 
     ++b_rpcDet_n;
   }
 
-/*
-  std::vector<const reco::GenParticle*> genMuons;
-  for ( const auto& p : *genParticleHandle ) {
-    if ( std::abs(p.pdgId()) != 13 ) continue;
-    if ( p.status() != 1 ) continue;
-
-    const double pt = p.pt();
-    const double abseta = std::abs(p.eta());
-    if ( abseta < 1.8 or abseta > 2.4 ) continue;
-    if ( pt < 20 ) continue;
-
-    genMuons.push_back(&p);
-  }
-  std::sort(genMuons.begin(), genMuons.end(), 
-            [](const reco::GenParticle* a, const reco::GenParticle* b){return a->pt()>b->pt();});
-  if ( !genMuons.empty() ) {
-    const reco::GenParticle* genMu = genMuons[0];
-    const reco::Muon* recMu = 0;
-    double minDR = 0.1;
-    for ( auto& mu : *muonHandle ) {
-      const double dR = deltaR(mu, *genMu);
-      if ( dR > minDR ) continue;
-
-      minDR = dR;
-      recMu = &mu;
-    }
-
-    if ( recMu ) {
-      const double dPtPt = (recMu->pt()-genMu->pt())/genMu->pt();
-      hDR_->Fill(deltaR(*recMu, *genMu));
-      hDPt_->Fill(dPtPt);
-      hDPt_abseta_->Fill(std::abs(genMu->eta()), dPtPt);
-
-      if ( recMu->isStandAloneMuon() ) {
-        hDPtSta_->Fill( (recMu->standAloneMuon()->pt()-genMu->pt())/genMu->pt() );
-      }
-      if ( recMu->isGlobalMuon() ) {
-        hDPtGlb_->Fill( (recMu->globalTrack()->pt()-genMu->pt())/genMu->pt() );
-      }
-    }
-  }
-*/
-
-/*
-  if ( muonHandle.isValid() and vertexHandle.isValid() and rpcRecHitsHandle.isValid() ) {
-    const reco::Vertex* pv = 0;
-    for ( auto& vtx : *vertexHandle ) {
-      if ( vtx.isFake() ) continue;
-      if ( vtx.ndof() <= 4 ) continue;
-      if ( std::abs(vtx.z()) > 24 ) continue;
-      if ( std::abs(vtx.position().rho()) > 2 ) continue;
-
-      pv = &vtx;
-      break;
-    }
-
-    reco::MuonCollection muons;
-    for ( auto& mu : *muonHandle ) {
-      if ( std::abs(mu.eta()) >= 2.5 or mu.pt() < 20 ) continue;
-      muons.push_back(mu);
-    }
-    std::sort(muons.begin(), muons.end(), [](const reco::Muon& a, const reco::Muon& b){return a.pt() > b.pt();});
-
-    for ( auto& mu : muons ) {
-      b_muon_pt[b_muon_n] = mu.pt();
-      b_muon_eta[b_muon_n] = mu.eta();
-      b_muon_phi[b_muon_n] = mu.phi();
-      b_muon_q[b_muon_n] = mu.charge();
-      b_muon_isLoose[b_muon_n] = muon::isLooseMuon(mu);
-      b_muon_isTight[b_muon_n] = !pv ? false : muon::isTightMuon(mu, *pv);
-      b_muon_isRPC[b_muon_n] = muon::isGoodMuon(mu, muon::RPCMuLoose, reco::Muon::RPCHitAndTrackArbitration);
-
-      b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
-      b_muon_RPCTime[b_muon_n] = mu.rpcTime().timeAtIpInOut;
-
-      const std::vector<HitInfo> hitTimes = getRPCTimes(mu, *rpcRecHitsHandle, rpcGeom, true);
-      const double sumTime = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0, [](const double& a, const HitInfo& b){return a+b.first[0];});
-      b_muon_RPCTimeNew[b_muon_n] = hitTimes.empty() ? 0 : sumTime/hitTimes.size();
-      b_muon_nRPC[b_muon_n] = hitTimes.size();
-      b_muon_nIRPC[b_muon_n] = std::count_if(hitTimes.begin(), hitTimes.end(), [](const HitInfo& p){return p.second == 2;});
-      const double sumBeta = std::accumulate(hitTimes.begin(), hitTimes.end(), 0.0, [&](const double& sum, const HitInfo& p){
-        if ( p.second == 0 ) return sum;
-        const double t = p.first[0];
-        const double r = p.first[1];
-        const double r0 = p.first[2];
-        const double beta = r/(r0+speedOfLight_*t);
-        return sum+beta;
-      });
-      b_muon_RPCBeta[b_muon_n] = hitTimes.empty() ? 0 : sumBeta/hitTimes.size();
-
-      const double dR1 = !genParticle1 ? 999 : deltaR(mu, *genParticle1);
-      const double dR2 = !genParticle2 ? 999 : deltaR(mu, *genParticle2);
-      if ( dR1 < 999 and dR1 < dR2 ) {
-        b_muon_genDR[b_muon_n] = dR1;
-        b_muon_genPdgId[b_muon_n] = genParticle1->pdgId();
-      }
-      else if ( dR2 < 999 and dR2 < dR1 ) {
-        b_muon_genDR[b_muon_n] = dR2;
-        b_muon_genPdgId[b_muon_n] = genParticle2->pdgId();
-      }
-
-      if ( ++b_muon_n >= muon_N ) break;
-    }
-  }
-*/
-
-  tree_->Fill();
+  hitTree_->Fill();
+  detTree_->Fill();
 }
 
 #include "FWCore/Framework/interface/MakerMacros.h"
