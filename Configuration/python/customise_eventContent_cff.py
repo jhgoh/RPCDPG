@@ -5,16 +5,15 @@ def customise_eventContent(process):
 
     process.AODSIMoutput.outputCommands = [
         "drop *",
-        "keep *_genParticles_*_*",
+        "keep recoGenParticles_genParticles__*",
         "keep *_g4SimHits_MuonRPCHits_*",
         "keep *_simMuonRPCDigis_*_*",
         "keep *_simMuonRPCReDigis_*_*",
 
         "keep *_muons__*",
 
-        "keep *_rpcRecHits_*_*",
-        'keep *_gemRecHits_*_*',
-        'keep *_me0RecHits_*_*',
+        'keep *_dt4DSegments_*_*', 'keep *_cscSegments_*_*', 'keep *_rpcRecHits_*_*',
+        'keep *_gemRecHits_*_*', 'keep *_me0RecHits_*_*',
 
         'keep *_*_MergedTrackTruth_*',
 
