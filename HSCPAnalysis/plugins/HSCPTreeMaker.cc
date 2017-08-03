@@ -450,6 +450,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
     b_gen2_m = p.mass();
     b_gen2_beta = 1/hypot(1, p.mass()/p.p());
   }
+  if ( !genParticle1 and !genParticle2 ) return;
 
   if ( doSimHit_ and rpcSimHitsHandle.isValid() ) {
     for ( auto& simHit : *rpcSimHitsHandle ) {
