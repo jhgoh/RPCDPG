@@ -768,7 +768,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   tree_->Fill();
 }
 
-std::vector<HitInfo> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu, 
+std::vector<HitInfo> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu,
                                                 const RPCRecHitCollection& rpcHits, edm::ESHandle<RPCGeometry>& rpcGeom,
                                                 const bool doOnlyWithTime) const
 {
@@ -780,24 +780,46 @@ std::vector<HitInfo> HSCPTreeMaker::getRPCTimes(const reco::Muon& mu,
 
   if ( trackRef.isNull() ) return hitTimes;
 
-  for ( auto ihit = trackRef->recHitsBegin(); ihit != trackRef->recHitsEnd(); ++ihit ) {
-    if ( !(*ihit)->isValid() ) continue;
-    if ( (*ihit)->geographicalId().det() != DetId::Muon or (*ihit)->geographicalId().subdetId() != 3 ) continue;
+  try {
+    for ( auto ihit = trackRef->recHitsBegin(); ihit != trackRef->recHitsEnd(); ++ihit ) {
+      if ( !(*ihit)->isValid() ) continue;
+      if ( (*ihit)->geographicalId().det() != DetId::Muon or (*ihit)->geographicalId().subdetId() != 3 ) continue;
 
-    const RPCDetId detId((*ihit)->rawId());
-    const auto roll = rpcGeom->roll(detId);
-    const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
+      const RPCDetId detId((*ihit)->rawId());
+      const auto roll = rpcGeom->roll(detId);
+      const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
 
-    const auto hitRange = rpcHits.get(detId);
-    for ( auto rpcHit = hitRange.first; rpcHit != hitRange.second; ++rpcHit ) {
-      // "detType" is 0 if no time info, 1 with time info after LB upgrade, 2 for iRPC
-      const int detType = rpcHit->timeError() >= 0 ? roll->isIRPC() ? 2 : 1 : 0;
-      if ( doOnlyWithTime and detType == 0 ) continue; 
+      const auto hitRange = rpcHits.get(detId);
+      for ( auto rpcHit = hitRange.first; rpcHit != hitRange.second; ++rpcHit ) {
+        // "detType" is 0 if no time info, 1 with time info after LB upgrade, 2 for iRPC
+        const int detType = rpcHit->timeError() >= 0 ? roll->isIRPC() ? 2 : 1 : 0;
+        if ( doOnlyWithTime and detType == 0 ) continue;
 
-      const double time = detType != 0 ? rpcHit->time() : 25.*rpcHit->BunchX();
-      const double r = roll->toGlobal(rpcHit->localPosition()).mag();
-      std::array<double, 3> hitRT = {{time, r, r0}};
-      hitTimes.emplace_back(hitRT, detType);
+        const double time = detType != 0 ? rpcHit->time() : 25.*rpcHit->BunchX();
+        const double r = roll->toGlobal(rpcHit->localPosition()).mag();
+        std::array<double, 3> hitRT = {{time, r, r0}};
+        hitTimes.emplace_back(hitRT, detType);
+      }
+    }
+  }
+  catch ( cms::Exception& e ) {
+    for ( auto& match : mu.matches() ) {
+      if ( match.detector() != 3 ) continue;
+
+      const RPCDetId detId(match.id);
+      const auto roll = rpcGeom->roll(detId);
+      const double r0 = roll->toGlobal(LocalPoint(0,0)).mag();
+
+      const auto hitRange = rpcHits.get(detId);
+      for ( auto rpcHit = hitRange.first; rpcHit != hitRange.second; ++rpcHit ) {
+        const int detType = rpcHit->timeError() >= 0 ? roll->isIRPC() ? 2 : 1 : 0;
+        if ( doOnlyWithTime and detType == 0 ) continue;
+
+        const double time = detType != 0 ? rpcHit->time() : 25.*rpcHit->BunchX();
+        const double r = roll->toGlobal(rpcHit->localPosition()).mag();
+        std::array<double, 3> hitRT = {{time, r, r0}};
+        hitTimes.emplace_back(hitRT, detType);
+      }
     }
   }
 
