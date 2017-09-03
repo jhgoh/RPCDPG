@@ -30,6 +30,9 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string("hist.root"),
 )
 
+#process.HSCPTree.signalPdgId = 13
+process.HSCPTree.signalPdgId = 1000015
+
 process.p = cms.Path(
     process.HSCPTree
 )
