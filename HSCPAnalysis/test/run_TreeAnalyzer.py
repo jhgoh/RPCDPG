@@ -12,8 +12,8 @@ mass = 651
 #mass = 1599
 #res = [0,1,2,3,4,5,10]
 res = 0
-fName1 = "ntuple/PhaseIIFall16DR82/DYJetsToLL_M-50_NoPU.root"
-fName2 = "ntuple/PhaseIIFall16DR82/HSCPppstau_M_%d_NoPU.root" % mass
+fName1 = "ntuple/DYJetsToLL_M-50_PU200*.root"
+fName2 = "ntuple/HSCPppstau_M_%d_PU200*.root" % mass
 title1 = "Z#rightarrow#mu#mu"
 title2 = "#tilde{#tau}^{-} (M=%d GeV)" % mass
 
@@ -71,18 +71,18 @@ def drawH1(varName, dir1, dir2, options):
 gSystem.CompileMacro("TreeAnalyzer.C", "k");
 
 for sample in [fName1, fName2]:
-    foutName = "hist_" + os.path.basename(sample)
+    foutName = "hist_" + os.path.basename(sample.replace('*',''))
     if os.path.exists(foutName): continue
 
-    fin = TFile(sample)
-    tree = fin.Get("HSCPTree/tree")
+    tree = TChain("HSCPTree/tree")
+    tree.Add(sample)
     ana = TreeAnalyzer(tree)
     fout = TFile(foutName, "RECREATE")
     ana.Loop(fout)
     ana = None
 
-f1 = TFile("hist_"+os.path.basename(fName1))
-f2 = TFile("hist_"+os.path.basename(fName2))
+f1 = TFile("hist_"+os.path.basename(fName1.replace('*','')))
+f2 = TFile("hist_"+os.path.basename(fName2.replace('*','')))
 
 dirGen1 = f1.Get("gen")
 dirGen2 = f2.Get("gen")
