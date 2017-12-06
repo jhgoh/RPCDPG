@@ -11,6 +11,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TLorentzVector.h>
 
 // Header file for the classes stored in the TTree if any.
 
@@ -89,6 +90,7 @@ class TreeAnalyzer {
     Double_t        muon_pt[100];   //[muon_n]
     Double_t        muon_eta[100];   //[muon_n]
     Double_t        muon_phi[100];   //[muon_n]
+    Short_t         muon_q[100];   //[muon_n]
     Bool_t          muon_isLoose[100];   //[muon_n]
     Bool_t          muon_isTight[100];   //[muon_n]
     Bool_t          muon_isRPC[100];   //[muon_n]
@@ -169,6 +171,7 @@ class TreeAnalyzer {
     TBranch        *b_muon_pt;   //!
     TBranch        *b_muon_eta;   //!
     TBranch        *b_muon_phi;   //!
+    TBranch        *b_muon_q;   //!
     TBranch        *b_muon_isLoose;   //!
     TBranch        *b_muon_isTight;   //!
     TBranch        *b_muon_isRPC;   //!
@@ -189,6 +192,10 @@ class TreeAnalyzer {
     virtual void     Loop(TFile* outFile);
     virtual Bool_t   Notify();
     virtual void     Show(Long64_t entry = -1);
+
+    std::vector<std::vector<unsigned>> clusterHitsByGenP4s(const TLorentzVector p4s[]) const;
+    std::vector<double> fitTrackBxConstrained(const std::vector<unsigned>& hits) const;
+    std::vector<double> fitTrackSlope(const std::vector<unsigned>& hits) const;
 
 };
 
@@ -319,6 +326,7 @@ void TreeAnalyzer::Init(TTree *tree)
   fChain->SetBranchAddress("muon_pt", muon_pt, &b_muon_pt);
   fChain->SetBranchAddress("muon_eta", muon_eta, &b_muon_eta);
   fChain->SetBranchAddress("muon_phi", muon_phi, &b_muon_phi);
+  fChain->SetBranchAddress("muon_q", muon_q, &b_muon_q);
   fChain->SetBranchAddress("muon_isLoose", muon_isLoose, &b_muon_isLoose);
   fChain->SetBranchAddress("muon_isTight", muon_isTight, &b_muon_isTight);
   fChain->SetBranchAddress("muon_isRPC", muon_isRPC, &b_muon_isRPC);

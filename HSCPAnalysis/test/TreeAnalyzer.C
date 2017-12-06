@@ -4,136 +4,221 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 #include <TRandom3.h>
+#include <TLorentzVector.h>
 
+#include <vector>
 #include <iostream>
+#include <algorithm>
+
+const double muonMass = 0.1057;
+const double speedOfLight = 29.979; // 30cm/ns
+const int bxLo = -8, nBx = 17;
+
+double deltaPhi(const double phi1, const double phi2)
+{
+  double dphi = phi1 - phi2;
+  if ( dphi < -TMath::TwoPi() ) dphi += TMath::TwoPi();
+  else if ( dphi > TMath::TwoPi() ) dphi -= TMath::TwoPi();
+  return dphi;
+}
+
+std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
+{
+  std::vector<std::vector<unsigned>> clusters;
+  clusters.resize(2);
+
+  for ( unsigned i=0; i<rpcHit_n; ++i ) {
+    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
+    double minDR = 0.3;
+    int match = -1;
+    for ( unsigned j=0; j<2; ++j ) {
+      const double dR = p4s[j].Vect().DeltaR(pos);
+      if ( dR < minDR ) {
+        minDR = dR;
+        match = j;
+      }
+    }
+    if ( match >= 0 ) clusters.at(match).push_back(i);
+  }
+
+  return clusters;
+}
+
+std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsigned>& hits) const
+{
+  // result: qual, beta, t0
+  std::vector<double> result = {1e9, 0, 0, 0, 0};
+  const unsigned n = hits.size();
+  if ( n == 0 ) return result;
+
+  double sumBeta = 0;
+  double sumTimeDiff2 = 0;
+  double firstPhi = 0; // this is necessary to shift all phi's to the new origin. without shifting, +2pi and -2pi will result unphysical large variance
+  double sumEta = 0, sumEta2 = 0, sumDphi = 0, sumDphi2 = 0;
+  
+  unsigned nValidBeta = 0;
+  for ( auto i : hits ) {
+    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
+    const double ct = speedOfLight*rpcHit_time[i];
+    const double ibeta = 1./(1+ct/pos.Mag());
+    if ( ibeta > 2 or ibeta < -1 ) continue;
+    sumBeta += ibeta;
+    sumTimeDiff2 += rpcHit_time[i]*rpcHit_time[i];
+
+    sumEta += pos.Eta();
+    sumEta2 += pos.Eta()*pos.Eta();
+    if ( nValidBeta == 0 ) firstPhi = pos.Phi();
+    else {
+      const double dphi = pos.Phi()-firstPhi;
+      sumDphi += dphi;
+      sumDphi2 += dphi*dphi;
+    }
+
+    ++nValidBeta;
+  }
+  const double dRErr2 = ((sumDphi2-sumDphi*sumDphi/nValidBeta) +
+                         (sumEta2-sumEta*sumEta/nValidBeta))/nValidBeta;
+  
+  result = {dRErr2, sumBeta/nValidBeta, sumTimeDiff2/nValidBeta};
+
+  return result;
+}
+
+std::vector<double> TreeAnalyzer::fitTrackSlope(const std::vector<unsigned>& hits) const
+{
+  std::vector<double> result = {1e9, 0, 0, 0, 0};
+  const unsigned n = hits.size();
+  if ( n <= 2 ) return result;
+
+  double sx = 0, sy = 0, sxy = 0, sxx = 0, syy = 0;
+  for ( auto i : hits ) {
+    const double r2 = rpcHit_x[i]*rpcHit_x[i] + rpcHit_y[i]*rpcHit_y[i] + rpcHit_z[i]*rpcHit_z[i];
+    const double r = std::sqrt(r2);
+    const double t = rpcHit_time[i];
+    sx  += r;
+    sy  += t;
+    sxy += r*t;
+    sxx += r2;
+    syy += t*t;
+  }
+  const double ssxy = sxy-sx*sy/n;
+  const double ssxx = sxx-sx*sx/n;
+  const double ssyy = syy-sy*sy/n;
+  const double b = ssxy/ssxx;
+  const double s = std::sqrt((ssyy - b*ssxy)/(n-2));
+  const double bStdErr = s/std::sqrt(ssxx);
+
+  const double t0 = (sy-b*sx)/n; // is "a" in the original code
+  const double t0Err = s*std::sqrt(1./n + sx*sx*ssxx/n/n); // is "aStdErr" in the original code
+  const double beta = 1./(b*speedOfLight+1.);
+  const double betaErr = speedOfLight*bStdErr/((b*speedOfLight+1)*(b*speedOfLight+1));
+
+  const double bxPull = std::asin(std::sin(TMath::Pi()*t0/25.));
+  //const double bxPull = t0/25.;
+  result = {bxPull, beta, betaErr, t0, t0Err};
+  
+  return result;
+}
 
 void TreeAnalyzer::Loop(TFile* fout)
 {
   fout->cd();
+  TTree* tree = new TTree("tree", "tree");
 
-  TDirectory* dirGenBeta = fout->mkdir("gen");
-  dirGenBeta->cd();
-  std::vector<TH1D*> h_all_beta1, h_iRPC_beta1, h_cRPC_beta1;
-  std::vector<TH1D*> h_all_beta2, h_iRPC_beta2, h_cRPC_beta2;
-  std::vector<int> betaRes = {0,1,2,3,4,5,10};
-  for ( auto r : betaRes ) {
-    TH1D* hh_beta1 = new TH1D(Form("h_muon1_beta_res%03d", r), Form("Beta distribution res=%d%%;#tilde{#tau}^{-} #beta;Events / 0.02", r), 50, 0, 1);
-    TH1D* hh_iRPC_beta1 = new TH1D(Form("h_muon1_iRPC_beta_res%03d", r), Form("iRPC Beta distribution res=%d%%;#tilde{#tau}^{-} #beta;Events / 0.02", r), 50, 0, 1);
-    TH1D* hh_cRPC_beta1 = new TH1D(Form("h_muon1_cRPC_beta_res%03d", r), Form("cRPC Beta distribution res=%d%%;#tilde{#tau}^{-} #beta;Events / 0.02", r), 50, 0, 1);
-    TH1D* hh_beta2 = new TH1D(Form("h_muon2_beta_res%03d", r), Form("Beta distribution res=%d%%;#tilde{#tau}^{+} #beta;Events / 0.02", r), 50, 0, 1);
-    TH1D* hh_iRPC_beta2 = new TH1D(Form("h_muon2_iRPC_beta_res%03d", r), Form("iRPC Beta distribution res=%d%%;#tilde{#tau}^{+} #beta;Events / 0.02", r), 50, 0, 1);
-    TH1D* hh_cRPC_beta2 = new TH1D(Form("h_muon2_cRPC_beta_res%03d", r), Form("cRPC Beta distribution res=%d%%;#tilde{#tau}^{+} #beta;Events / 0.02", r), 50, 0, 1);
-    h_all_beta1.push_back(hh_beta1);
-    h_iRPC_beta1.push_back(hh_iRPC_beta1);
-    h_cRPC_beta1.push_back(hh_cRPC_beta1);
-    h_all_beta2.push_back(hh_beta2);
-    h_iRPC_beta2.push_back(hh_iRPC_beta2);
-    h_cRPC_beta2.push_back(hh_cRPC_beta2);
-  }
+  TLorentzVector out_gens_p4[2];
+  int out_gens_pdgId[2];
+  tree->Branch("gen1_p4", "TLorentzVector", &out_gens_p4[0]);
+  tree->Branch("gen2_p4", "TLorentzVector", &out_gens_p4[1]);
+  tree->Branch("gen1_pdgId", &out_gens_pdgId[0], "gen1_pdgId/I");
+  tree->Branch("gen2_pdgId", &out_gens_pdgId[1], "gen2_pdgId/I");
 
-  TDirectory* dirReco = fout->mkdir("muon");
-  dirReco->cd();
-  TH1D* h_muon1_m = new TH1D("h_muon1_m", "TOF mass;Leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_muon2_m = new TH1D("h_muon2_m", "TOF mass;2nd leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_muon1_beta = new TH1D("h_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-  TH1D* h_muon2_beta = new TH1D("h_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-  TH2D* h_muon1_beta__muon2_beta = new TH2D("h_muon1_beta__muon2_beta", "Beta distribution;Leading #tilde{#tau} #beta;2nd leading #tilde{#tau} #beta", 50, 0, 1, 50, 0, 1);
-  TH2D* h_muon1_m__muon2_m = new TH2D("h_muon1_m__muon2_m", "TOF mass;Leading #tilde{#tau} mass (GeV);2nd leading #tilde{#tau} mass (GeV)", 50, 0, 1, 50, 0, 1);
+  unsigned out_muons_n; 
+  TLorentzVector out_muons_p4[3];
+  int out_muons_q[3];
+  tree->Branch("muon1_p4", "TLorentzVector", &out_muons_p4[0]);
+  tree->Branch("muon2_p4", "TLorentzVector", &out_muons_p4[1]);
+  tree->Branch("muon3_p4", "TLorentzVector", &out_muons_p4[2]);
+  tree->Branch("muon1_q", &out_muons_q[0], "muon1_q/I");
+  tree->Branch("muon2_q", &out_muons_q[1], "muon2_q/I");
+  tree->Branch("muon3_q", &out_muons_q[2], "muon3_q/I");
 
-  TH1D* h_iRPC_muon1_m = new TH1D("h_iRPC_muon1_m", "TOF mass;Leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_iRPC_muon2_m = new TH1D("h_iRPC_muon2_m", "TOF mass;2nd leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_iRPC_muon1_beta = new TH1D("h_iRPC_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-  TH1D* h_iRPC_muon2_beta = new TH1D("h_iRPC_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-
-  TH1D* h_cRPC_muon1_m = new TH1D("h_cRPC_muon1_m", "TOF mass;Leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_cRPC_muon2_m = new TH1D("h_cRPC_muon2_m", "TOF mass;2nd leading #tilde{#tau} mass (GeV);Events / 10GeV", 200, 0, 2000);
-  TH1D* h_cRPC_muon1_beta = new TH1D("h_cRPC_muon1_beta", "Beta distribution;Leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-  TH1D* h_cRPC_muon2_beta = new TH1D("h_cRPC_muon2_beta", "Beta distribution;2nd leading #tilde{#tau} #beta;Events / 0.02", 50, 0, 1);
-
-  h_muon1_m->GetXaxis()->SetNdivisions(505);
-  h_muon2_m->GetXaxis()->SetNdivisions(505);
-  h_iRPC_muon1_m->GetXaxis()->SetNdivisions(505);
-  h_iRPC_muon2_m->GetXaxis()->SetNdivisions(505);
-  h_cRPC_muon1_m->GetXaxis()->SetNdivisions(505);
-  h_cRPC_muon2_m->GetXaxis()->SetNdivisions(505);
-  h_muon1_m__muon2_m->GetXaxis()->SetNdivisions(505);
-  h_muon1_m__muon2_m->GetYaxis()->SetNdivisions(505);
+  float out_fit_quals[2];
+  float out_fit_betas[2];
+  tree->Branch("fit_qual1", &out_fit_quals[0], "fit_qual1/F");
+  tree->Branch("fit_qual2", &out_fit_quals[1], "fit_qual2/F");
+  tree->Branch("fit_beta1", &out_fit_betas[0], "fit_beta1/F");
+  tree->Branch("fit_beta2", &out_fit_betas[1], "fit_beta2/F");
 
   if (fChain == 0) return;
-
-  Long64_t nentries = fChain->GetEntriesFast();
-
+  Long64_t nentries = fChain->GetEntries();
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=0; jentry<nentries;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
-
-    if ( gen1_pdgId != 0 and gen2_pdgId != 0 ) {
-
-      const int region1 = std::abs(gen1_eta) < 1.8 ? 0 : std::abs(gen1_eta) < 2.4 ? 1 : 2;
-      const int region2 = std::abs(gen2_eta) < 1.8 ? 0 : std::abs(gen2_eta) < 2.4 ? 1 : 2;
-
-      h_all_beta1[0]->Fill(gen1_beta);
-      if      ( region1 == 0 ) h_cRPC_beta1[0]->Fill(gen1_beta);
-      else if ( region1 == 1 ) h_iRPC_beta1[0]->Fill(gen1_beta);
-      h_all_beta2[0]->Fill(gen2_beta);
-      if      ( region2 == 0 ) h_cRPC_beta2[0]->Fill(gen2_beta);
-      else if ( region2 == 1 ) h_iRPC_beta2[0]->Fill(gen2_beta);
-      for ( size_t i=1; i<betaRes.size(); ++i ) {
-        const double newBeta1 = gRandom->Gaus(gen1_beta, gen1_beta*betaRes[i]/100.);
-        h_all_beta1[i]->Fill(newBeta1);
-        if      ( region1 == 0 ) h_cRPC_beta1[i]->Fill(newBeta1);
-        else if ( region1 == 1 ) h_iRPC_beta1[i]->Fill(newBeta1);
-
-        const double newBeta2 = gRandom->Gaus(gen2_beta, gen2_beta*betaRes[i]/100.);
-        h_all_beta2[i]->Fill(newBeta2);
-        if      ( region2 == 0 ) h_cRPC_beta2[i]->Fill(newBeta2);
-        else if ( region2 == 1 ) h_iRPC_beta2[i]->Fill(newBeta2);
-      }
+    if ( (10000*(jentry+1)/nentries) % 100 == 0 ) {
+      printf("Processing %lld/%lld, %.0f %% done...\r",  jentry+1, nentries, 100.*jentry/nentries);
     }
 
-    if ( muon_n > 0 ) {
-      const double pt1 = muon_pt[0], eta1 = muon_eta[0];
-      const double beta1 = muon_RPCBeta[0];
-      const double m1 = beta1 == 0 ? 0 : pt1*cosh(abs(eta1))*sqrt(1./beta1/beta1-1);
-
-      h_muon1_beta->Fill(beta1);
-      h_muon1_m->Fill(m1);
-
-      if ( muon_nIRPC[0] > 0 ) {
-        h_iRPC_muon1_beta->Fill(beta1);
-        h_iRPC_muon1_m->Fill(m1);
-      }
-      else {
-        h_cRPC_muon1_beta->Fill(beta1);
-        h_cRPC_muon1_m->Fill(m1);
-      }
+    // Initialize variables
+    for ( unsigned i=0; i<2; ++i ) {
+      out_gens_p4[i].SetXYZT(0,0,0,0);
+      out_gens_pdgId[i] = 0;
     }
-    if ( muon_n > 1 ) {
-      const double pt1 = muon_pt[0], eta1 = muon_eta[0];
-      const double beta1 = muon_RPCBeta[0];
-      const double m1 = beta1 == 0 ? 0 : pt1*cosh(abs(eta1))*sqrt(1./beta1/beta1-1);
-      const double pt2 = muon_pt[1], eta2 = muon_eta[1];
-      const double beta2 = muon_RPCBeta[1];
-      const double m2 = beta2 == 0 ? 0 : pt2*cosh(abs(eta2))*sqrt(1./beta2/beta2-1);
-
-      h_muon2_beta->Fill(beta2);
-      h_muon2_m->Fill(m2);
-
-      h_muon1_beta__muon2_beta->Fill(beta1, beta2);
-      h_muon1_m__muon2_m->Fill(m1, m2);
-
-      if ( muon_nIRPC[1] > 0 ) {
-        h_iRPC_muon2_beta->Fill(beta2);
-        h_iRPC_muon2_m->Fill(m2);
-      }
-      else {
-        h_cRPC_muon2_beta->Fill(beta2);
-        h_cRPC_muon2_m->Fill(m2);
-      }
+    out_muons_n = 0;
+    for ( unsigned i=0; i<3; ++i ) {
+      out_muons_p4[i].SetXYZT(0,0,0,0);
+      out_muons_q[i] = 0;
     }
+    for ( unsigned i=0; i<2; ++i ) {
+      out_fit_quals[i] = 1e9;
+      out_fit_betas[i] = 0;
+    }
+
+    // Fill particles
+    if ( gen1_pdgId != 0 ) {
+      out_gens_p4[0].SetPtEtaPhiM(gen1_pt, gen1_eta, gen1_phi, gen1_m);
+      out_gens_pdgId[0] = gen1_pdgId;
+    }
+    if ( gen2_pdgId != 0 ) {
+      out_gens_p4[1].SetPtEtaPhiM(gen2_pt, gen2_eta, gen2_phi, gen2_m);
+      out_gens_pdgId[1] = gen2_pdgId;
+    }
+
+    std::vector<unsigned> muonIdxs;
+    for ( unsigned i=0; i<muon_n; ++i ) {
+      if ( muon_pt[i] < 30 or std::abs(muon_eta[i]) > 2.4 ) continue;
+      muonIdxs.push_back(i);
+    }
+    std::sort(muonIdxs.begin(), muonIdxs.end(), [&](unsigned i, unsigned j){return muon_pt[i] > muon_pt[j];});
+    for ( unsigned i=0, n=std::min(3ul, muonIdxs.size()); i<n; ++i ) {
+      const auto ii = muonIdxs[i];
+      out_muons_p4[i].SetPtEtaPhiM(muon_pt[ii], muon_eta[ii], muon_phi[ii], muonMass);
+      out_muons_q[i] = muon_q[i];
+    }
+
+    // Cluster hits and do the fitting
+    const auto hitClusters = clusterHitsByGenP4s(out_gens_p4);
+    for ( unsigned i=0, n=std::max(2ul, hitClusters.size()); i<n; ++i ) { 
+      const auto res = fitTrackBxConstrained(hitClusters[i]);
+      //const auto res = fitTrackSlope(hitClusters[i]);
+      out_fit_quals[i] = res[0];
+      out_fit_betas[i] = res[1];
+    }
+
+/*
+      const double ct = speedOfLight*rpcHit_time[i];
+      for ( int bx = bxLo; bx <= bxLo+nBx; ++bx ) {
+        const double ibeta = 1./(1+speedOfLight*(rpcHit_time[i]-bx*25)/r);
+        hitsByBeta[bx-bxLo][ibeta] = i;
+      }
+*/
+
+    if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
+
+    tree->Fill();
   }
+  cout << "Processing " << nentries << "/" << nentries << "\n"; // Just to print last event
 
   fout->Write();
 }
