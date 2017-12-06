@@ -113,7 +113,8 @@ std::vector<double> TreeAnalyzer::fitTrackSlope(const std::vector<unsigned>& hit
   const double beta = 1./(b*speedOfLight+1.);
   const double betaErr = speedOfLight*bStdErr/((b*speedOfLight+1)*(b*speedOfLight+1));
 
-  const double bxPull = std::asin(std::sin(TMath::Pi()*t0/25.));
+  const int nbx = std::round(t0/25.);
+  const double bxPull = t0 - nbx*25;
   //const double bxPull = t0/25.;
   result = {bxPull, beta, betaErr, t0, t0Err};
   
