@@ -13,6 +13,7 @@
 const double muonMass = 0.1057;
 const double speedOfLight = 29.979; // 30cm/ns
 const int bxLo = -8, nBx = 17;
+const unsigned minNhitCluster = 2;
 
 double deltaPhi(const double phi1, const double phi2)
 {
@@ -22,8 +23,58 @@ double deltaPhi(const double phi1, const double phi2)
   return dphi;
 }
 
+struct HEtaPhiBeta
+{
+  constexpr static int nbinsEta = 25, nbinsPhi = 50, nbinsBeta = 15;
+  constexpr static double minEta = -2.5, maxEta = 2.5;
+  constexpr static double minPhi = 0, maxPhi = 2*3.14159265358979323846L+1e-9;
+  constexpr static double minBeta = -1, maxBeta = 2;
+  constexpr static double binwEta  = (maxEta-minEta)/nbinsEta;
+  constexpr static double binwPhi  = (maxPhi-minPhi)/nbinsPhi;
+  constexpr static double binwBeta = (maxBeta-minBeta)/nbinsBeta;
+
+  unsigned findBin(const double eta, const double phi, const double beta) const
+  {
+    const int ieta  = std::max(-1, std::min(nbinsEta, int(floor((eta-minEta)/binwEta))));
+    const int iphi  = std::max(-1, std::min(nbinsPhi, int(floor((phi-minPhi)/binwPhi))));
+    const int ibeta = std::max(-1, std::min(nbinsBeta, int(floor((beta-minBeta)/binwBeta))));
+
+    const unsigned ibin = (ieta+1)
+                        + (iphi+1)*(nbinsEta+2);
+                        //+ (ibeta+1)*(nbinsEta+2)*(nbinsPhi+2);
+    return ibin;
+  }
+
+  std::vector<double> findBinLowEdge(unsigned ibin) const
+  {
+    const int ieta = ibin % (nbinsEta+2) - 1;
+    ibin /= nbinsEta+2;
+    const int iphi = ibin % (nbinsPhi+2) - 1;
+    //ibin /= nbinsPhi+2;
+    //const int ibeta = ibin - 1;
+
+    const double eta  = ieta*binwEta+minEta;
+    const double phi  = iphi*binwPhi+minPhi;
+    //const double beta = ibeta*binwBeta+minBeta;
+
+    std::vector<double> res = {eta, phi};//, beta};
+    return res;
+  }
+
+  void fill(const double eta, const double phi, const double beta, const unsigned idx)
+  {
+    const unsigned ibin = findBin(eta, phi, beta);
+    auto itr = contents.find(ibin);
+    if ( itr == contents.end() ) itr = contents.insert(std::make_pair(ibin, std::vector<unsigned>())).first;
+    itr->second.push_back(idx);
+  }
+
+  std::map<unsigned, std::vector<unsigned>> contents;
+};
+
 std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
 {
+  // Cluster hits along the GenParticle's four momentum, just for initial testing.
   std::vector<std::vector<unsigned>> clusters;
   clusters.resize(2);
 
@@ -44,6 +95,29 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
   return clusters;
 }
 
+std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByEtaPhi() const
+{
+  // Hit clustering in 3D, eta-phi-beta space with vx=vy=vz=0 & bx=0 hypothesis
+  std::vector<std::vector<unsigned>> clusters;
+  // First step to fill "histograms"
+  HEtaPhiBeta h;
+  for ( unsigned i=0; i<rpcHit_n; ++i ) {
+    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
+    const double eta = pos.Eta(), phi = pos.Phi();
+    const double ct = speedOfLight*rpcHit_time[i];
+    const double beta = 1./(1+ct/pos.Mag());
+
+    h.fill(eta, phi, beta, i);
+  }
+
+  for ( auto item : h.contents ) {
+    if ( item.second.size() < minNhitCluster ) continue;
+    clusters.push_back(item.second);
+  }
+
+  return clusters;
+}
+
 std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsigned>& hits) const
 {
   // result: qual, beta, t0
@@ -55,7 +129,7 @@ std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsign
   double sumTimeDiff2 = 0;
   double firstPhi = 0; // this is necessary to shift all phi's to the new origin. without shifting, +2pi and -2pi will result unphysical large variance
   double sumEta = 0, sumEta2 = 0, sumDphi = 0, sumDphi2 = 0;
-  
+
   unsigned nValidBeta = 0;
   for ( auto i : hits ) {
     const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
@@ -78,7 +152,7 @@ std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsign
   }
   const double dRErr2 = ((sumDphi2-sumDphi*sumDphi/nValidBeta) +
                          (sumEta2-sumEta*sumEta/nValidBeta))/nValidBeta;
-  
+
   result = {dRErr2, sumBeta/nValidBeta, sumTimeDiff2/nValidBeta};
 
   return result;
@@ -117,7 +191,7 @@ std::vector<double> TreeAnalyzer::fitTrackSlope(const std::vector<unsigned>& hit
   const double bxPull = t0 - nbx*25;
   //const double bxPull = t0/25.;
   result = {bxPull, beta, betaErr, t0, t0Err};
-  
+
   return result;
 }
 
@@ -133,7 +207,7 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("gen1_pdgId", &out_gens_pdgId[0], "gen1_pdgId/I");
   tree->Branch("gen2_pdgId", &out_gens_pdgId[1], "gen2_pdgId/I");
 
-  unsigned out_muons_n; 
+  unsigned out_muons_n;
   TLorentzVector out_muons_p4[3];
   int out_muons_q[3];
   tree->Branch("muon1_p4", "TLorentzVector", &out_muons_p4[0]);
@@ -199,10 +273,13 @@ void TreeAnalyzer::Loop(TFile* fout)
     }
 
     // Cluster hits and do the fitting
-    const auto hitClusters = clusterHitsByGenP4s(out_gens_p4);
-    for ( unsigned i=0, n=std::max(2ul, hitClusters.size()); i<n; ++i ) { 
-      const auto res = fitTrackBxConstrained(hitClusters[i]);
-      //const auto res = fitTrackSlope(hitClusters[i]);
+    //const auto hitClusters = clusterHitsByGenP4s(out_gens_p4);
+    auto hitClusters = clusterHitsByEtaPhi();
+    std::sort(hitClusters.begin(), hitClusters.end(),
+              [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
+    for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
+      //const auto res = fitTrackBxConstrained(hitClusters[i]);
+      const auto res = fitTrackSlope(hitClusters[i]);
       out_fit_quals[i] = res[0];
       out_fit_betas[i] = res[1];
     }
