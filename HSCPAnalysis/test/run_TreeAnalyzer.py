@@ -10,16 +10,16 @@ import os
 objs = []
 #mass = 651
 mass = 1599
-#fName1 = "ntuple/DYJetsToLL_M-50_noPU.root"
-#fName2 = "ntuple/HSCPppstau_m%d_LGW25.root" % mass
-fName1 = "ntuple/DYJetsToLL_M-50_PU200*.root"
-fName2 = "ntuple/HSCPppstau_M_%d_PU200*.root" % mass
-title1 = "Z#rightarrow#mu#mu"
-title2 = "#tilde{#tau}^{-} (M=%d GeV)" % mass
+samples = [
+    "ntuple/DYJetsToLL_M-50_noPU.root",
+    "ntuple/HSCPppstau_m%d_LGW25.root" % mass,
+    "ntuple/DYJetsToLL_M-50_PU200*.root",
+    "ntuple/HSCPppstau_M_%d_PU200*.root" % mass,
+]
 
 gSystem.CompileMacro("TreeAnalyzer.C", "k");
 
-for sample in [fName1, fName2]:
+for sample in samples:
     foutName = "hist_" + os.path.basename(sample.replace('*',''))
 
     tree = TChain("HSCPTree/tree")
