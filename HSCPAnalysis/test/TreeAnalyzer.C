@@ -13,7 +13,14 @@
 const double muonMass = 0.1057;
 const double speedOfLight = 29.979; // 30cm/ns
 const int bxLo = -8, nBx = 17;
+
 const unsigned minNhitCluster = 2;
+enum class ClusterAlgo { GenMatch, Histogram };
+enum class FitAlgo { BxContrained, FitSlope };
+ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
+//ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
+FitAlgo fitAlgo = FitAlgo::FitSlope;
+//FitAlgo fitAlgo = FitAlgo::BxContrained;
 
 double deltaPhi(const double phi1, const double phi2)
 {
@@ -219,10 +226,13 @@ void TreeAnalyzer::Loop(TFile* fout)
 
   float out_fit_quals[2];
   float out_fit_betas[2];
+  unsigned out_fit_nhits[2];
   tree->Branch("fit_qual1", &out_fit_quals[0], "fit_qual1/F");
   tree->Branch("fit_qual2", &out_fit_quals[1], "fit_qual2/F");
   tree->Branch("fit_beta1", &out_fit_betas[0], "fit_beta1/F");
   tree->Branch("fit_beta2", &out_fit_betas[1], "fit_beta2/F");
+  tree->Branch("fit_nhit1", &out_fit_nhits[0], "fit_nhit1/i");
+  tree->Branch("fit_nhit2", &out_fit_nhits[1], "fit_nhit2/i");
 
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntries();
@@ -248,6 +258,7 @@ void TreeAnalyzer::Loop(TFile* fout)
     for ( unsigned i=0; i<2; ++i ) {
       out_fit_quals[i] = 1e9;
       out_fit_betas[i] = 0;
+      out_fit_nhits[i] = 0;
     }
 
     // Fill particles
@@ -273,24 +284,20 @@ void TreeAnalyzer::Loop(TFile* fout)
     }
 
     // Cluster hits and do the fitting
-    //const auto hitClusters = clusterHitsByGenP4s(out_gens_p4);
-    auto hitClusters = clusterHitsByEtaPhi();
+    std::vector<std::vector<unsigned>> hitClusters;
+    if      ( clusterAlgo == ClusterAlgo::GenMatch  ) hitClusters = clusterHitsByGenP4s(out_gens_p4);
+    else if ( clusterAlgo == ClusterAlgo::Histogram ) hitClusters = clusterHitsByEtaPhi();
     std::sort(hitClusters.begin(), hitClusters.end(),
               [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
     for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
-      //const auto res = fitTrackBxConstrained(hitClusters[i]);
-      const auto res = fitTrackSlope(hitClusters[i]);
+      std::vector<double> res;
+      if      ( fitAlgo == FitAlgo::BxContrained ) res = fitTrackBxConstrained(hitClusters[i]);
+      else if ( fitAlgo == FitAlgo::FitSlope     ) res = fitTrackSlope(hitClusters[i]);
+
       out_fit_quals[i] = res[0];
       out_fit_betas[i] = res[1];
+      out_fit_nhits[i] = hitClusters[i].size();
     }
-
-/*
-      const double ct = speedOfLight*rpcHit_time[i];
-      for ( int bx = bxLo; bx <= bxLo+nBx; ++bx ) {
-        const double ibeta = 1./(1+speedOfLight*(rpcHit_time[i]-bx*25)/r);
-        hitsByBeta[bx-bxLo][ibeta] = i;
-      }
-*/
 
     if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
 
