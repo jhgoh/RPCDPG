@@ -17,10 +17,10 @@ const int bxLo = -8, nBx = 17;
 const unsigned minNhitCluster = 2;
 enum class ClusterAlgo { GenMatch, Histogram };
 enum class FitAlgo { BxContrained, FitSlope };
-ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
-//ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
-FitAlgo fitAlgo = FitAlgo::FitSlope;
-//FitAlgo fitAlgo = FitAlgo::BxContrained;
+//ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
+ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
+//FitAlgo fitAlgo = FitAlgo::FitSlope;
+FitAlgo fitAlgo = FitAlgo::BxContrained;
 
 double deltaPhi(const double phi1, const double phi2)
 {

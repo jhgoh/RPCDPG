@@ -23,52 +23,18 @@ class TreeAnalyzer {
     // Fixed size dimensions of array or collections stored in the TTree if any.
 
     // Declaration of leaf types
-    Short_t         gen1_pdgId;
+    Int_t           gen1_pdgId;
     Double_t        gen1_pt;
     Double_t        gen1_eta;
     Double_t        gen1_phi;
     Double_t        gen1_m;
     Double_t        gen1_beta;
-    Short_t         gen2_pdgId;
+    Int_t           gen2_pdgId;
     Double_t        gen2_pt;
     Double_t        gen2_eta;
     Double_t        gen2_phi;
     Double_t        gen2_m;
     Double_t        gen2_beta;
-    UShort_t        simDigi1_n;
-    Bool_t          simDigi1_isBarrel[1000];   //[simDigi1_n]
-    Bool_t          simDigi1_isIRPC[1000];   //[simDigi1_n]
-    Short_t         simDigi1_sector[1000];   //[simDigi1_n]
-    Short_t         simDigi1_station[1000];   //[simDigi1_n]
-    Short_t         simDigi1_wheel[1000];   //[simDigi1_n]
-    Short_t         simDigi1_layer[1000];   //[simDigi1_n]
-    Short_t         simDigi1_disk[1000];   //[simDigi1_n]
-    Short_t         simDigi1_ring[1000];   //[simDigi1_n]
-    Double_t        simDigi1_x[1000];   //[simDigi1_n]
-    Double_t        simDigi1_y[1000];   //[simDigi1_n]
-    Double_t        simDigi1_z[1000];   //[simDigi1_n]
-    Double_t        simDigi1_tof[1000];   //[simDigi1_n]
-    Double_t        simDigi1_t0[1000];   //[simDigi1_n]
-    Double_t        simDigi1_lx[1000];   //[simDigi1_n]
-    Double_t        simDigi1_ly[1000];   //[simDigi1_n]
-    Short_t         simDigi1_bx[1000];   //[simDigi1_n]
-    UShort_t        simDigi2_n;
-    Bool_t          simDigi2_isBarrel[1000];   //[simDigi2_n]
-    Bool_t          simDigi2_isIRPC[1000];   //[simDigi2_n]
-    Short_t         simDigi2_sector[1000];   //[simDigi2_n]
-    Short_t         simDigi2_station[1000];   //[simDigi2_n]
-    Short_t         simDigi2_wheel[1000];   //[simDigi2_n]
-    Short_t         simDigi2_layer[1000];   //[simDigi2_n]
-    Short_t         simDigi2_disk[1000];   //[simDigi2_n]
-    Short_t         simDigi2_ring[1000];   //[simDigi2_n]
-    Double_t        simDigi2_x[1000];   //[simDigi2_n]
-    Double_t        simDigi2_y[1000];   //[simDigi2_n]
-    Double_t        simDigi2_z[1000];   //[simDigi2_n]
-    Double_t        simDigi2_tof[1000];   //[simDigi2_n]
-    Double_t        simDigi2_t0[1000];   //[simDigi2_n]
-    Double_t        simDigi2_lx[1000];   //[simDigi2_n]
-    Double_t        simDigi2_ly[1000];   //[simDigi2_n]
-    Short_t         simDigi2_bx[1000];   //[simDigi2_n]
     UShort_t        rpcHit_n;
     Bool_t          rpcHit_isBarrel[1000];   //[rpcHit_n]
     Bool_t          rpcHit_isIRPC[1000];   //[rpcHit_n]
@@ -101,7 +67,7 @@ class TreeAnalyzer {
     UShort_t        muon_nRPC[100];   //[muon_n]
     UShort_t        muon_nIRPC[100];   //[muon_n]
     Double_t        muon_genDR[100];   //[muon_n]
-    Short_t         muon_genPdgId[100];   //[muon_n]
+    Int_t           muon_genPdgId[100];   //[muon_n]
 
     // List of branches
     TBranch        *b_gen1_pdgId;   //!
@@ -116,40 +82,6 @@ class TreeAnalyzer {
     TBranch        *b_gen2_phi;   //!
     TBranch        *b_gen2_m;   //!
     TBranch        *b_gen2_beta;   //!
-    TBranch        *b_simDigi1_n;   //!
-    TBranch        *b_simDigi1_isBarrel;   //!
-    TBranch        *b_simDigi1_isIRPC;   //!
-    TBranch        *b_simDigi1_sector;   //!
-    TBranch        *b_simDigi1_station;   //!
-    TBranch        *b_simDigi1_wheel;   //!
-    TBranch        *b_simDigi1_layer;   //!
-    TBranch        *b_simDigi1_disk;   //!
-    TBranch        *b_simDigi1_ring;   //!
-    TBranch        *b_simDigi1_x;   //!
-    TBranch        *b_simDigi1_y;   //!
-    TBranch        *b_simDigi1_z;   //!
-    TBranch        *b_simDigi1_tof;   //!
-    TBranch        *b_simDigi1_t0;   //!
-    TBranch        *b_simDigi1_lx;   //!
-    TBranch        *b_simDigi1_ly;   //!
-    TBranch        *b_simDigi1_bx;   //!
-    TBranch        *b_simDigi2_n;   //!
-    TBranch        *b_simDigi2_isBarrel;   //!
-    TBranch        *b_simDigi2_isIRPC;   //!
-    TBranch        *b_simDigi2_sector;   //!
-    TBranch        *b_simDigi2_station;   //!
-    TBranch        *b_simDigi2_wheel;   //!
-    TBranch        *b_simDigi2_layer;   //!
-    TBranch        *b_simDigi2_disk;   //!
-    TBranch        *b_simDigi2_ring;   //!
-    TBranch        *b_simDigi2_x;   //!
-    TBranch        *b_simDigi2_y;   //!
-    TBranch        *b_simDigi2_z;   //!
-    TBranch        *b_simDigi2_tof;   //!
-    TBranch        *b_simDigi2_t0;   //!
-    TBranch        *b_simDigi2_lx;   //!
-    TBranch        *b_simDigi2_ly;   //!
-    TBranch        *b_simDigi2_bx;   //!
     TBranch        *b_rpcHit_n;   //!
     TBranch        *b_rpcHit_isBarrel;   //!
     TBranch        *b_rpcHit_isIRPC;   //!
@@ -272,40 +204,6 @@ void TreeAnalyzer::Init(TTree *tree)
   fChain->SetBranchAddress("gen2_phi", &gen2_phi, &b_gen2_phi);
   fChain->SetBranchAddress("gen2_m", &gen2_m, &b_gen2_m);
   fChain->SetBranchAddress("gen2_beta", &gen2_beta, &b_gen2_beta);
-  fChain->SetBranchAddress("simDigi1_n", &simDigi1_n, &b_simDigi1_n);
-  fChain->SetBranchAddress("simDigi1_isBarrel", simDigi1_isBarrel, &b_simDigi1_isBarrel);
-  fChain->SetBranchAddress("simDigi1_isIRPC", simDigi1_isIRPC, &b_simDigi1_isIRPC);
-  fChain->SetBranchAddress("simDigi1_sector", simDigi1_sector, &b_simDigi1_sector);
-  fChain->SetBranchAddress("simDigi1_station", simDigi1_station, &b_simDigi1_station);
-  fChain->SetBranchAddress("simDigi1_wheel", simDigi1_wheel, &b_simDigi1_wheel);
-  fChain->SetBranchAddress("simDigi1_layer", simDigi1_layer, &b_simDigi1_layer);
-  fChain->SetBranchAddress("simDigi1_disk", simDigi1_disk, &b_simDigi1_disk);
-  fChain->SetBranchAddress("simDigi1_ring", simDigi1_ring, &b_simDigi1_ring);
-  fChain->SetBranchAddress("simDigi1_x", simDigi1_x, &b_simDigi1_x);
-  fChain->SetBranchAddress("simDigi1_y", simDigi1_y, &b_simDigi1_y);
-  fChain->SetBranchAddress("simDigi1_z", simDigi1_z, &b_simDigi1_z);
-  fChain->SetBranchAddress("simDigi1_tof", simDigi1_tof, &b_simDigi1_tof);
-  fChain->SetBranchAddress("simDigi1_t0", simDigi1_t0, &b_simDigi1_t0);
-  fChain->SetBranchAddress("simDigi1_lx", simDigi1_lx, &b_simDigi1_lx);
-  fChain->SetBranchAddress("simDigi1_ly", simDigi1_ly, &b_simDigi1_ly);
-  fChain->SetBranchAddress("simDigi1_bx", simDigi1_bx, &b_simDigi1_bx);
-  fChain->SetBranchAddress("simDigi2_n", &simDigi2_n, &b_simDigi2_n);
-  fChain->SetBranchAddress("simDigi2_isBarrel", simDigi2_isBarrel, &b_simDigi2_isBarrel);
-  fChain->SetBranchAddress("simDigi2_isIRPC", simDigi2_isIRPC, &b_simDigi2_isIRPC);
-  fChain->SetBranchAddress("simDigi2_sector", simDigi2_sector, &b_simDigi2_sector);
-  fChain->SetBranchAddress("simDigi2_station", simDigi2_station, &b_simDigi2_station);
-  fChain->SetBranchAddress("simDigi2_wheel", simDigi2_wheel, &b_simDigi2_wheel);
-  fChain->SetBranchAddress("simDigi2_layer", simDigi2_layer, &b_simDigi2_layer);
-  fChain->SetBranchAddress("simDigi2_disk", simDigi2_disk, &b_simDigi2_disk);
-  fChain->SetBranchAddress("simDigi2_ring", simDigi2_ring, &b_simDigi2_ring);
-  fChain->SetBranchAddress("simDigi2_x", simDigi2_x, &b_simDigi2_x);
-  fChain->SetBranchAddress("simDigi2_y", simDigi2_y, &b_simDigi2_y);
-  fChain->SetBranchAddress("simDigi2_z", simDigi2_z, &b_simDigi2_z);
-  fChain->SetBranchAddress("simDigi2_tof", simDigi2_tof, &b_simDigi2_tof);
-  fChain->SetBranchAddress("simDigi2_t0", simDigi2_t0, &b_simDigi2_t0);
-  fChain->SetBranchAddress("simDigi2_lx", simDigi2_lx, &b_simDigi2_lx);
-  fChain->SetBranchAddress("simDigi2_ly", simDigi2_ly, &b_simDigi2_ly);
-  fChain->SetBranchAddress("simDigi2_bx", simDigi2_bx, &b_simDigi2_bx);
   fChain->SetBranchAddress("rpcHit_n", &rpcHit_n, &b_rpcHit_n);
   fChain->SetBranchAddress("rpcHit_isBarrel", rpcHit_isBarrel, &b_rpcHit_isBarrel);
   fChain->SetBranchAddress("rpcHit_isIRPC", rpcHit_isIRPC, &b_rpcHit_isIRPC);
