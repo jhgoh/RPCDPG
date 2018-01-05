@@ -90,6 +90,7 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
     double minDR = 0.3;
     int match = -1;
     for ( unsigned j=0; j<2; ++j ) {
+      //if ( p4s[j].Pt() == 0 ) continue;
       const double dR = p4s[j].Vect().DeltaR(pos);
       if ( dR < minDR ) {
         minDR = dR;
@@ -234,6 +235,8 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("fit_nhit1", &out_fit_nhits[0], "fit_nhit1/i");
   tree->Branch("fit_nhit2", &out_fit_nhits[1], "fit_nhit2/i");
 
+  //int nEvent = 0 , nPair = 0, nSingle = 0;
+
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntries();
   Long64_t nbytes = 0, nb = 0;
@@ -261,6 +264,8 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_fit_nhits[i] = 0;
     }
 
+    if ( gen1_pdgId == 0 or gen2_pdgId == 0 ) continue;
+    if ( gen1_pt < 100 or gen2_pt < 100 ) continue;
     // Fill particles
     if ( gen1_pdgId != 0 ) {
       out_gens_p4[0].SetPtEtaPhiM(gen1_pt, gen1_eta, gen1_phi, gen1_m);
@@ -299,11 +304,19 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_fit_nhits[i] = hitClusters[i].size();
     }
 
+    //if ( out_fit_quals[0] < 1e9 and out_fit_quals[1] < 1e9 ) ++nPair;
+    //if ( out_fit_quals[0] < 1e9 or out_fit_quals[1] < 1e9 ) ++nSingle;
+    //++nEvent;
     if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
 
     tree->Fill();
   }
   cout << "Processing " << nentries << "/" << nentries << "\n"; // Just to print last event
+
+  //cout << "vvvvvvvvvvvvvvvvvvvvv\n";
+  //printf("nPair: %d/%d, eff=%f\n", nPair, nEvent, nPair*1./nEvent);
+  //printf("nSing: %d/%d, eff=%f\n", nSingle, nEvent, nSingle*1./nEvent);
+  //cout << "^^^^^^^^^^^^^^^^^^^^^\n";
 
   fout->Write();
 }
