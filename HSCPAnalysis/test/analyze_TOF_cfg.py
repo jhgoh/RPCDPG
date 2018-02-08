@@ -25,15 +25,18 @@ process.source = cms.Source("PoolSource",
 )
 
 process.load("RPCUpgrade.HSCPAnalysis.HSCPTreeMaker_cff")
-process.HSCPTree.rpcDigis = "simMuonRPCReDigis"
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string("hist.root"),
+)
+
+process.p = cms.Path(
+    process.HSCPTree
 )
 
 #process.HSCPTree.signalPdgId = 13
 process.HSCPTree.signalPdgId = 1000015
 
-process.p = cms.Path(
-    process.HSCPTree
-)
+#process.HSCPTree.rpcDigis = "simMuonRPCReDigis"
+process.HSCPTree.genParticle = "prunedGenParticles"
+process.HSCPTree.vertex = "offlineSlimmedPrimaryVertices"
 
