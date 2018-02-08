@@ -12,7 +12,7 @@ process.maxEvents = cms.untracked.PSet(
 )
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        'file:/eos/cms/store/user/jhgoh/RPCUpgrade/20170622_1/HSCPppstau_M_1599_14TeV__step3_redigi__911p1__D12_LGW25/step3_077.root',
+        'file:/xrootd/store/user/jhgoh/RPCUpgrade/20180208_1/step3_RAW2DIGI_L1Reco_RECO_PU_1.root',
     ),
     secondaryFileNames = cms.untracked.vstring(
     )
@@ -40,11 +40,12 @@ process.copyAll = cms.OutputModule("PoolOutputModule",
     ),
 )
 
-#process.offlineSlimmedPrimaryVertices.score = "offlinePrimaryVertices"
+process.offlineSlimmedPrimaryVertices.score = "offlinePrimaryVertices"
 
 process.p = cms.Path(
     process.prunedGenParticles
-  + process.primaryVertexAssociation * process.offlineSlimmedPrimaryVertices
+  #+ process.primaryVertexAssociation * process.offlineSlimmedPrimaryVertices
+  + process.offlineSlimmedPrimaryVertices
   + process.slimmedAddPileupInfo
 )
 process.out = cms.EndPath(process.copyAll)
