@@ -599,14 +599,14 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   }
 
   if ( muonHandle.isValid() and vertexHandle.isValid() and rpcRecHitsHandle.isValid() ) {
-    const reco::Vertex* pv = 0;
+    //const reco::Vertex* pv = 0;
     for ( auto& vtx : *vertexHandle ) {
       if ( vtx.isFake() ) continue;
       if ( vtx.ndof() <= 4 ) continue;
       if ( std::abs(vtx.z()) > 24 ) continue;
       if ( std::abs(vtx.position().rho()) > 2 ) continue;
 
-      pv = &vtx;
+      //pv = &vtx;
       break;
     }
 
@@ -623,7 +623,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       b_muon_phi[b_muon_n] = mu.phi();
       b_muon_q[b_muon_n] = mu.charge();
       b_muon_isLoose[b_muon_n] = muon::isLooseMuon(mu);
-      b_muon_isTight[b_muon_n] = !pv ? false : muon::isTightMuon(mu, *pv);
+      b_muon_isTight[b_muon_n] = false; //!pv ? false : muon::isTightMuon(mu, *pv);
       b_muon_isRPC[b_muon_n] = muon::isGoodMuon(mu, muon::RPCMuLoose, reco::Muon::RPCHitAndTrackArbitration);
 
       b_muon_time[b_muon_n] = mu.time().timeAtIpInOut;
