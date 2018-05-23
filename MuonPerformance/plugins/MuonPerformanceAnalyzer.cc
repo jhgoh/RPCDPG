@@ -106,7 +106,7 @@ MuonPerformanceAnalyzer::MuonPerformanceAnalyzer(const edm::ParameterSet& pset)
   verticesToken_ = consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertices"));
 
   auto tpSet = pset.getParameter<edm::ParameterSet>("tpSelector");
-  tpSelector_ = TrackingParticleSelector(tpSet.getParameter<double>("ptMin"),
+  tpSelector_ = TrackingParticleSelector(tpSet.getParameter<double>("ptMin"), 1e9,
                                          tpSet.getParameter<double>("minRapidity"),
                                          tpSet.getParameter<double>("maxRapidity"),
                                          tpSet.getParameter<double>("tip"),
