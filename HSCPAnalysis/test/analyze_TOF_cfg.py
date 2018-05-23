@@ -3,7 +3,7 @@ import sys, os
 
 from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('Analysis',eras.Phase2C1)
+process = cms.Process('Analysis',eras.Phase2_timing)
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -37,6 +37,7 @@ process.p = cms.Path(
 process.HSCPTree.signalPdgId = 1000015
 
 #process.HSCPTree.rpcDigis = "simMuonRPCReDigis"
-process.HSCPTree.genParticle = "prunedGenParticles"
-process.HSCPTree.vertex = "offlineSlimmedPrimaryVertices"
+#process.HSCPTree.genParticle = "prunedGenParticles"
+#process.HSCPTree.vertex = "offlineSlimmedPrimaryVertices"
+process.GlobalTag = GlobalTag(process.GlobalTag, '93X_upgrade2023_realistic_v5', '')
 
