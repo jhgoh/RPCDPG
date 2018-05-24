@@ -31,6 +31,9 @@ def customise_eventContent(process):
         'keep recoMuonTrackLinkss_globalMuons_*_*',
 
         'keep  *_offlinePrimaryVertices__*',
+
+        'keep *_TTCluster*_*_*',
+        'keep *_TTStub*_*_*',
     ]
 
     return process
