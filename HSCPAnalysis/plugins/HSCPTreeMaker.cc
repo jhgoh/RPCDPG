@@ -178,7 +178,7 @@ private:
   const static unsigned short ttTrack_N = 100;
   unsigned short b_ttTrack_n;
   double b_ttTrack_pt[ttTrack_N], b_ttTrack_eta[ttTrack_N], b_ttTrack_phi[ttTrack_N];
-  short b_ttTrack_q[ttTrack_N];
+  double b_ttTrack_z[ttTrack_N];
   double b_ttTrack_genDR[ttTrack_N];
   short b_ttTrack_genPdgId[ttTrack_N];
 
@@ -360,7 +360,7 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("ttTrack_pt", b_ttTrack_pt, "ttTrack_pt[ttTrack_n]/D");
   tree_->Branch("ttTrack_eta", b_ttTrack_eta, "ttTrack_eta[ttTrack_n]/D");
   tree_->Branch("ttTrack_phi", b_ttTrack_phi, "ttTrack_phi[ttTrack_n]/D");
-  tree_->Branch("ttTrack_q", b_ttTrack_q, "ttTrack_q[ttTrack_n]/S");
+  tree_->Branch("ttTrack_z", b_ttTrack_z, "ttTrack_z[ttTrack_n]/D");
   tree_->Branch("ttTrack_genDR", b_ttTrack_genDR, "ttTrack_genDR[ttTrack_n]/D");
   tree_->Branch("ttTrack_genPdgId", b_ttTrack_genPdgId, "ttTrack_genPdgId[ttTrack_n]/S");
 
@@ -639,7 +639,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
       b_ttTrack_pt[b_ttTrack_n] = momentum.perp();
       b_ttTrack_eta[b_ttTrack_n] = momentum.eta();
       b_ttTrack_phi[b_ttTrack_n] = momentum.phi();
-      b_ttTrack_q[b_ttTrack_n] = 0;
+      b_ttTrack_z[b_ttTrack_n] = ttTrackItr->getPOCA().z();
 
       const double dR1 = !genParticle1 ? 999 : deltaR(momentum, *genParticle1);
       const double dR2 = !genParticle2 ? 999 : deltaR(momentum, *genParticle2);
