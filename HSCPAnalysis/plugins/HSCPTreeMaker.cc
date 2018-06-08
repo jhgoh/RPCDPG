@@ -27,6 +27,8 @@
 #include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
+#include "DataFormats/L1TrackTrigger/interface/TTTrack.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
@@ -57,6 +59,7 @@
 using namespace std;
 
 typedef std::pair<std::array<double, 3>, int> HitInfo;
+typedef std::vector<TTTrack<Ref_Phase2TrackerDigi_>> TTTrackCollection;
 
 class HSCPTreeMaker : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
@@ -87,6 +90,7 @@ private:
   edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken_;
   edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken_;
   edm::EDGetTokenT<GEMSegmentCollection> gemSegmentsToken_;
+  edm::EDGetTokenT<TTTrackCollection> ttTrackToken_;
   edm::EDGetTokenT<reco::MuonCollection> muonToken_;
   edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
 
@@ -171,6 +175,13 @@ private:
   double b_gemSegment_time[gemSegment_N];
   double b_gemSegment_lx[gemSegment_N], b_gemSegment_ly[gemSegment_N];
 
+  const static unsigned short ttTrack_N = 100;
+  unsigned short b_ttTrack_n;
+  double b_ttTrack_pt[ttTrack_N], b_ttTrack_eta[ttTrack_N], b_ttTrack_phi[ttTrack_N];
+  short b_ttTrack_q[ttTrack_N];
+  double b_ttTrack_genDR[ttTrack_N];
+  short b_ttTrack_genPdgId[ttTrack_N];
+
   const static unsigned short muon_N = 10;
   unsigned short b_muon_n;
   double b_muon_pt[muon_N], b_muon_eta[muon_N], b_muon_phi[muon_N];
@@ -199,6 +210,7 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   dtSegmentsToken_(consumes<DTRecSegment4DCollection>(pset.getParameter<edm::InputTag>("dtSegments"))),
   cscSegmentsToken_(consumes<CSCSegmentCollection>(pset.getParameter<edm::InputTag>("cscSegments"))),
   gemSegmentsToken_(consumes<GEMSegmentCollection>(pset.getParameter<edm::InputTag>("gemSegments"))),
+  ttTrackToken_(consumes<TTTrackCollection>(pset.getParameter<edm::InputTag>("ttTracks"))),
   muonToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
   vertexToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertex")))
 {
@@ -344,6 +356,14 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   tree_->Branch("gemSegment_lx", b_gemSegment_lx, "gemSegment_lx[gemSegment_n]/D");
   tree_->Branch("gemSegment_ly", b_gemSegment_ly, "gemSegment_ly[gemSegment_n]/D");
 
+  tree_->Branch("ttTrack_n", &b_ttTrack_n, "ttTrack_n/s");
+  tree_->Branch("ttTrack_pt", b_ttTrack_pt, "ttTrack_pt[ttTrack_n]/D");
+  tree_->Branch("ttTrack_eta", b_ttTrack_eta, "ttTrack_eta[ttTrack_n]/D");
+  tree_->Branch("ttTrack_phi", b_ttTrack_phi, "ttTrack_phi[ttTrack_n]/D");
+  tree_->Branch("ttTrack_q", b_ttTrack_q, "ttTrack_q[ttTrack_n]/S");
+  tree_->Branch("ttTrack_genDR", b_ttTrack_genDR, "ttTrack_genDR[ttTrack_n]/D");
+  tree_->Branch("ttTrack_genPdgId", b_ttTrack_genPdgId, "ttTrack_genPdgId[ttTrack_n]/S");
+
   tree_->Branch("muon_n", &b_muon_n, "muon_n/s");
   tree_->Branch("muon_pt", b_muon_pt, "muon_pt[muon_n]/D");
   tree_->Branch("muon_eta", b_muon_eta, "muon_eta[muon_n]/D");
@@ -376,6 +396,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
 {
   b_simHit1_n = b_simHit2_n = b_simDigi1_n = b_simDigi2_n = 0;
   b_rpcHit_n = b_dtSegment_n = b_cscSegment_n = b_gemSegment_n = 0;
+  b_ttTrack_n = 0;
   b_muon_n = 0;
 
   b_gen1_pdgId = b_gen1_pt = b_gen1_eta = b_gen1_phi = b_gen1_m = b_gen1_beta = 0;
@@ -404,6 +425,9 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
 
   edm::Handle<GEMSegmentCollection> gemSegmentsHandle;
   event.getByToken(gemSegmentsToken_, gemSegmentsHandle);
+
+  edm::Handle<TTTrackCollection> ttTrackHandle;
+  event.getByToken(ttTrackToken_, ttTrackHandle);
 
   edm::Handle<reco::MuonCollection> muonHandle;
   event.getByToken(muonToken_, muonHandle);
@@ -596,6 +620,29 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
           ++b_simDigi2_n;
         }
       }
+    }
+  }
+
+  if ( ttTrackHandle.isValid() ) {
+    for ( auto ttTrackItr = ttTrackHandle->begin(); ttTrackItr != ttTrackHandle->end(); ++ttTrackItr ) {
+      const auto& momentum = ttTrackItr->getMomentum();
+      b_ttTrack_pt[b_ttTrack_n] = momentum.perp();
+      b_ttTrack_eta[b_ttTrack_n] = momentum.eta();
+      b_ttTrack_phi[b_ttTrack_n] = momentum.phi();
+      b_ttTrack_q[b_ttTrack_n] = 0;
+
+      const double dR1 = !genParticle1 ? 999 : deltaR(momentum, *genParticle1);
+      const double dR2 = !genParticle2 ? 999 : deltaR(momentum, *genParticle2);
+      if ( dR1 < 999 and dR1 < dR2 ) {
+        b_ttTrack_genDR[b_ttTrack_n] = dR1;
+        b_ttTrack_genPdgId[b_ttTrack_n] = genParticle1->pdgId();
+      }
+      else if ( dR2 < 999 and dR2 < dR1 ) {
+        b_ttTrack_genDR[b_ttTrack_n] = dR2;
+        b_ttTrack_genPdgId[b_ttTrack_n] = genParticle2->pdgId();
+      }
+
+      if ( ++b_ttTrack_n >= ttTrack_N ) break;
     }
   }
 

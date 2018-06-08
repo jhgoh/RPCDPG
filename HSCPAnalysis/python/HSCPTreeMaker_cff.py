@@ -10,6 +10,7 @@ HSCPTree = cms.EDAnalyzer("HSCPTreeMaker",
     dtSegments = cms.InputTag("dt4DSegments"),
     cscSegments = cms.InputTag("cscSegments"),
     gemSegments = cms.InputTag("gemSegments"),
+    ttTracks = cms.InputTag("TTTracksFromTracklet", "Level1TTTracks"),
     muons = cms.InputTag("muons"),
     vertex = cms.InputTag("offlinePrimaryVertices"),
     signalPropagationSpeed = cms.double(0.66), ## To be overridden by SimMuon.RPCDigitizer.muonRPCDigis_cfi.simMuonRPCDigis, this may depend on eras
