@@ -59,7 +59,7 @@
 using namespace std;
 
 typedef std::pair<std::array<double, 3>, int> HitInfo;
-typedef std::vector<TTTrack<Ref_Phase2TrackerDigi_>> TTTrackCollection;
+typedef TTTrack<Ref_Phase2TrackerDigi_> TTTrackPhase2;
 
 class HSCPTreeMaker : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
@@ -90,7 +90,7 @@ private:
   edm::EDGetTokenT<DTRecSegment4DCollection> dtSegmentsToken_;
   edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken_;
   edm::EDGetTokenT<GEMSegmentCollection> gemSegmentsToken_;
-  edm::EDGetTokenT<TTTrackCollection> ttTrackToken_;
+  edm::EDGetTokenT<std::vector<TTTrackPhase2>> ttTrackToken_;
   edm::EDGetTokenT<reco::MuonCollection> muonToken_;
   edm::EDGetTokenT<reco::VertexCollection> vertexToken_;
 
@@ -210,7 +210,7 @@ HSCPTreeMaker::HSCPTreeMaker(const edm::ParameterSet& pset):
   dtSegmentsToken_(consumes<DTRecSegment4DCollection>(pset.getParameter<edm::InputTag>("dtSegments"))),
   cscSegmentsToken_(consumes<CSCSegmentCollection>(pset.getParameter<edm::InputTag>("cscSegments"))),
   gemSegmentsToken_(consumes<GEMSegmentCollection>(pset.getParameter<edm::InputTag>("gemSegments"))),
-  ttTrackToken_(consumes<TTTrackCollection>(pset.getParameter<edm::InputTag>("ttTracks"))),
+  ttTrackToken_(consumes<std::vector<TTTrackPhase2>>(pset.getParameter<edm::InputTag>("ttTracks"))),
   muonToken_(consumes<reco::MuonCollection>(pset.getParameter<edm::InputTag>("muons"))),
   vertexToken_(consumes<reco::VertexCollection>(pset.getParameter<edm::InputTag>("vertex")))
 {
@@ -426,7 +426,7 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   edm::Handle<GEMSegmentCollection> gemSegmentsHandle;
   event.getByToken(gemSegmentsToken_, gemSegmentsHandle);
 
-  edm::Handle<TTTrackCollection> ttTrackHandle;
+  edm::Handle<std::vector<TTTrackPhase2>> ttTrackHandle;
   event.getByToken(ttTrackToken_, ttTrackHandle);
 
   edm::Handle<reco::MuonCollection> muonHandle;
@@ -624,7 +624,17 @@ void HSCPTreeMaker::analyze(const edm::Event& event, const edm::EventSetup& even
   }
 
   if ( ttTrackHandle.isValid() ) {
+    std::vector<std::vector<TTTrackPhase2>::const_iterator> ttTrackItrs;
     for ( auto ttTrackItr = ttTrackHandle->begin(); ttTrackItr != ttTrackHandle->end(); ++ttTrackItr ) {
+      if ( ttTrackItr->getMomentum().perp() < 20 ) continue;
+      if ( std::abs(ttTrackItr->getMomentum().eta()) > 2.5 ) continue;
+      ttTrackItrs.push_back(ttTrackItr);
+    }
+    std::sort(ttTrackItrs.begin(), ttTrackItrs.end(),
+              [](const std::vector<TTTrackPhase2>::const_iterator a, const std::vector<TTTrackPhase2>::const_iterator b) {
+                return a->getMomentum().perp() > a->getMomentum().perp(); });
+
+    for ( auto ttTrackItr : ttTrackItrs ) {
       const auto& momentum = ttTrackItr->getMomentum();
       b_ttTrack_pt[b_ttTrack_n] = momentum.perp();
       b_ttTrack_eta[b_ttTrack_n] = momentum.eta();
