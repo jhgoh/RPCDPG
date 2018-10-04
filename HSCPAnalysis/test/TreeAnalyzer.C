@@ -15,9 +15,8 @@ const double speedOfLight = 29.979; // 30cm/ns
 const int bxLo = -8, nBx = 17;
 
 const unsigned minNhitCluster = 2;
-enum class ClusterAlgo { GenMatch, Histogram };
+enum class ClusterAlgo { GenMatch };
 enum class FitAlgo { BxContrained, FitSlope };
-//ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
 ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
 //FitAlgo fitAlgo = FitAlgo::FitSlope;
 FitAlgo fitAlgo = FitAlgo::BxContrained;
@@ -29,55 +28,6 @@ double deltaPhi(const double phi1, const double phi2)
   else if ( dphi > TMath::TwoPi() ) dphi -= TMath::TwoPi();
   return dphi;
 }
-
-struct HEtaPhiBeta
-{
-  constexpr static int nbinsEta = 25, nbinsPhi = 50, nbinsBeta = 15;
-  constexpr static double minEta = -2.5, maxEta = 2.5;
-  constexpr static double minPhi = 0, maxPhi = 2*3.14159265358979323846L+1e-9;
-  constexpr static double minBeta = -1, maxBeta = 2;
-  constexpr static double binwEta  = (maxEta-minEta)/nbinsEta;
-  constexpr static double binwPhi  = (maxPhi-minPhi)/nbinsPhi;
-  constexpr static double binwBeta = (maxBeta-minBeta)/nbinsBeta;
-
-  unsigned findBin(const double eta, const double phi, const double beta) const
-  {
-    const int ieta  = std::max(-1, std::min(nbinsEta, int(floor((eta-minEta)/binwEta))));
-    const int iphi  = std::max(-1, std::min(nbinsPhi, int(floor((phi-minPhi)/binwPhi))));
-    const int ibeta = std::max(-1, std::min(nbinsBeta, int(floor((beta-minBeta)/binwBeta))));
-
-    const unsigned ibin = (ieta+1)
-                        + (iphi+1)*(nbinsEta+2);
-                        //+ (ibeta+1)*(nbinsEta+2)*(nbinsPhi+2);
-    return ibin;
-  }
-
-  std::vector<double> findBinLowEdge(unsigned ibin) const
-  {
-    const int ieta = ibin % (nbinsEta+2) - 1;
-    ibin /= nbinsEta+2;
-    const int iphi = ibin % (nbinsPhi+2) - 1;
-    //ibin /= nbinsPhi+2;
-    //const int ibeta = ibin - 1;
-
-    const double eta  = ieta*binwEta+minEta;
-    const double phi  = iphi*binwPhi+minPhi;
-    //const double beta = ibeta*binwBeta+minBeta;
-
-    std::vector<double> res = {eta, phi};//, beta};
-    return res;
-  }
-
-  void fill(const double eta, const double phi, const double beta, const unsigned idx)
-  {
-    const unsigned ibin = findBin(eta, phi, beta);
-    auto itr = contents.find(ibin);
-    if ( itr == contents.end() ) itr = contents.insert(std::make_pair(ibin, std::vector<unsigned>())).first;
-    itr->second.push_back(idx);
-  }
-
-  std::map<unsigned, std::vector<unsigned>> contents;
-};
 
 std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
 {
@@ -98,29 +48,6 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
       }
     }
     if ( match >= 0 ) clusters.at(match).push_back(i);
-  }
-
-  return clusters;
-}
-
-std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByEtaPhi() const
-{
-  // Hit clustering in 3D, eta-phi-beta space with vx=vy=vz=0 & bx=0 hypothesis
-  std::vector<std::vector<unsigned>> clusters;
-  // First step to fill "histograms"
-  HEtaPhiBeta h;
-  for ( unsigned i=0; i<rpcHit_n; ++i ) {
-    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
-    const double eta = pos.Eta(), phi = pos.Phi();
-    const double ct = speedOfLight*rpcHit_time[i];
-    const double beta = 1./(1+ct/pos.Mag());
-
-    h.fill(eta, phi, beta, i);
-  }
-
-  for ( auto item : h.contents ) {
-    if ( item.second.size() < minNhitCluster ) continue;
-    clusters.push_back(item.second);
   }
 
   return clusters;
@@ -291,7 +218,6 @@ void TreeAnalyzer::Loop(TFile* fout)
     // Cluster hits and do the fitting
     std::vector<std::vector<unsigned>> hitClusters;
     if      ( clusterAlgo == ClusterAlgo::GenMatch  ) hitClusters = clusterHitsByGenP4s(out_gens_p4);
-    else if ( clusterAlgo == ClusterAlgo::Histogram ) hitClusters = clusterHitsByEtaPhi();
     std::sort(hitClusters.begin(), hitClusters.end(),
               [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
     for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
