@@ -187,13 +187,15 @@ void TreeAnalyzer::Loop(TFile* fout)
 
   float out_fit_quals[2];
   float out_fit_betas[2];
-  unsigned out_fit_nhits[2];
+  unsigned out_fit_nhits[2], out_fit_nIRPCs[2];
   tree->Branch("fit_qual1", &out_fit_quals[0], "fit_qual1/F");
   tree->Branch("fit_qual2", &out_fit_quals[1], "fit_qual2/F");
   tree->Branch("fit_beta1", &out_fit_betas[0], "fit_beta1/F");
   tree->Branch("fit_beta2", &out_fit_betas[1], "fit_beta2/F");
   tree->Branch("fit_nhit1", &out_fit_nhits[0], "fit_nhit1/i");
   tree->Branch("fit_nhit2", &out_fit_nhits[1], "fit_nhit2/i");
+  tree->Branch("fit_nIRPC1", &out_fit_nIRPCs[0], "fit_nIRPC1/i");
+  tree->Branch("fit_nIRPC2", &out_fit_nIRPCs[1], "fit_nIRPC2/i");
 
   //int nEvent = 0 , nPair = 0, nSingle = 0;
 
@@ -222,6 +224,7 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_fit_quals[i] = 1e9;
       out_fit_betas[i] = 0;
       out_fit_nhits[i] = 0;
+      out_fit_nIRPCs[i] = 0;
     }
 
     if ( gen1_pdgId == 0 or gen2_pdgId == 0 ) continue;
@@ -251,8 +254,8 @@ void TreeAnalyzer::Loop(TFile* fout)
     // Cluster hits and do the fitting
     std::vector<std::vector<unsigned>> hitClusters;
     if      ( clusterAlgo == ClusterAlgo::GenMatch  ) hitClusters = clusterHitsByGenP4s(out_gens_p4);
-    std::sort(hitClusters.begin(), hitClusters.end(),
-              [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
+    //std::sort(hitClusters.begin(), hitClusters.end(),
+    //          [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
     for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
       std::vector<double> res;
       if      ( fitAlgo == FitAlgo::BxContrained ) res = fitTrackBxConstrained(hitClusters[i]);
@@ -261,12 +264,15 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_fit_quals[i] = res[0];
       out_fit_betas[i] = res[1];
       out_fit_nhits[i] = hitClusters[i].size();
+      out_fit_nIRPCs[i] = [&](){unsigned nIRPC = 0;
+                                for ( auto ii : hitClusters[i] ) if ( rpcHit_isIRPC[ii] ) ++nIRPC;
+                                return nIRPC; }();
     }
 
     //if ( out_fit_quals[0] < 1e9 and out_fit_quals[1] < 1e9 ) ++nPair;
     //if ( out_fit_quals[0] < 1e9 or out_fit_quals[1] < 1e9 ) ++nSingle;
     //++nEvent;
-    if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
+    //if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
 
     tree->Fill();
   }
