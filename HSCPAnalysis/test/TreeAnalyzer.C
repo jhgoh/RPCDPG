@@ -35,7 +35,25 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
   std::vector<std::vector<unsigned>> clusters;
   clusters.resize(2);
 
-  unsigned nGEMSegment[2], nCSCSegment[2];
+  unsigned nDTSegment[2] = {0,0};
+  unsigned nCSCSegment[2] {0,0};
+  unsigned nGEMSegment[2] = {0,0};
+
+  for ( unsigned i=0; i<dtSegment_n; ++i ) {
+    const TVector3 pos(dtSegment_x[i], dtSegment_y[i], dtSegment_z[i]);
+    double minDR = 0.3;
+    int match = -1;
+    for ( unsigned j=0; j<2; ++j ) {
+      //if ( p4s[j].Pt() == 0 ) continue;
+      const double dR = p4s[j].Vect().DeltaR(pos);
+      if ( dR < minDR ) {
+        minDR = dR;
+        match = j;
+      }
+    }
+    if ( match >= 0 ) ++nDTSegment[match];
+  }
+
   for ( unsigned i=0; i<cscSegment_n; ++i ) {
     const TVector3 pos(cscSegment_x[i], cscSegment_y[i], cscSegment_z[i]);
     double minDR = 0.3;
@@ -78,7 +96,7 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
         match = j;
       }
     }
-    if ( match >= 0 and (nCSCSegment[match]+nGEMSegment[match] > 0) ) {
+    if ( match >= 0 and (nDTSegment[match]+nCSCSegment[match]+nGEMSegment[match] > 0) ) {
       clusters.at(match).push_back(i);
     }
   }
