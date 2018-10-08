@@ -193,16 +193,6 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("gen1_pdgId", &out_gens_pdgId[0], "gen1_pdgId/I");
   tree->Branch("gen2_pdgId", &out_gens_pdgId[1], "gen2_pdgId/I");
 
-  unsigned out_muons_n;
-  TLorentzVector out_muons_p4[3];
-  int out_muons_q[3];
-  tree->Branch("muon1_p4", "TLorentzVector", &out_muons_p4[0]);
-  tree->Branch("muon2_p4", "TLorentzVector", &out_muons_p4[1]);
-  tree->Branch("muon3_p4", "TLorentzVector", &out_muons_p4[2]);
-  tree->Branch("muon1_q", &out_muons_q[0], "muon1_q/I");
-  tree->Branch("muon2_q", &out_muons_q[1], "muon2_q/I");
-  tree->Branch("muon3_q", &out_muons_q[2], "muon3_q/I");
-
   float out_fit_quals[2];
   float out_fit_betas[2];
   unsigned out_fit_nhits[2], out_fit_nIRPCs[2];
@@ -233,11 +223,6 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_gens_p4[i].SetXYZT(0,0,0,0);
       out_gens_pdgId[i] = 0;
     }
-    out_muons_n = 0;
-    for ( unsigned i=0; i<3; ++i ) {
-      out_muons_p4[i].SetXYZT(0,0,0,0);
-      out_muons_q[i] = 0;
-    }
     for ( unsigned i=0; i<2; ++i ) {
       out_fit_quals[i] = 1e9;
       out_fit_betas[i] = 0;
@@ -255,18 +240,6 @@ void TreeAnalyzer::Loop(TFile* fout)
     if ( gen2_pdgId != 0 ) {
       out_gens_p4[1].SetPtEtaPhiM(gen2_pt, gen2_eta, gen2_phi, gen2_m);
       out_gens_pdgId[1] = gen2_pdgId;
-    }
-
-    std::vector<unsigned> muonIdxs;
-    for ( unsigned i=0; i<muon_n; ++i ) {
-      if ( muon_pt[i] < 30 or std::abs(muon_eta[i]) > 2.4 ) continue;
-      muonIdxs.push_back(i);
-    }
-    std::sort(muonIdxs.begin(), muonIdxs.end(), [&](unsigned i, unsigned j){return muon_pt[i] > muon_pt[j];});
-    for ( unsigned i=0, n=std::min(3ul, muonIdxs.size()); i<n; ++i ) {
-      const auto ii = muonIdxs[i];
-      out_muons_p4[i].SetPtEtaPhiM(muon_pt[ii], muon_eta[ii], muon_phi[ii], muonMass);
-      out_muons_q[i] = muon_q[i];
     }
 
     // Cluster hits and do the fitting
