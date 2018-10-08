@@ -52,6 +52,18 @@ class TreeAnalyzer {
     Double_t        rpcHit_lx[1000];   //[rpcHit_n]
     Double_t        rpcHit_ly[1000];   //[rpcHit_n]
     Short_t         rpcHit_bx[1000];   //[rpcHit_n]
+    UShort_t        dtSegment_n;
+    Double_t        dtSegment_x[1000];   //[dtSegment_n]
+    Double_t        dtSegment_y[1000];   //[dtSegment_n]
+    Double_t        dtSegment_z[1000];   //[dtSegment_n]
+    UShort_t        cscSegment_n;
+    Double_t        cscSegment_x[1000];   //[cscSegment_n]
+    Double_t        cscSegment_y[1000];   //[cscSegment_n]
+    Double_t        cscSegment_z[1000];   //[cscSegment_n]
+    UShort_t        gemSegment_n;
+    Double_t        gemSegment_x[1000];   //[gemSegment_n]
+    Double_t        gemSegment_y[1000];   //[gemSegment_n]
+    Double_t        gemSegment_z[1000];   //[gemSegment_n]
     UShort_t        muon_n;
     Double_t        muon_pt[100];   //[muon_n]
     Double_t        muon_eta[100];   //[muon_n]
@@ -99,6 +111,18 @@ class TreeAnalyzer {
     TBranch        *b_rpcHit_lx;   //!
     TBranch        *b_rpcHit_ly;   //!
     TBranch        *b_rpcHit_bx;   //!
+    TBranch        *b_dtSegment_n;   //!
+    TBranch        *b_dtSegment_x;   //!
+    TBranch        *b_dtSegment_y;   //!
+    TBranch        *b_dtSegment_z;   //!
+    TBranch        *b_cscSegment_n;   //!
+    TBranch        *b_cscSegment_x;   //!
+    TBranch        *b_cscSegment_y;   //!
+    TBranch        *b_cscSegment_z;   //!
+    TBranch        *b_gemSegment_n;   //!
+    TBranch        *b_gemSegment_x;   //!
+    TBranch        *b_gemSegment_y;   //!
+    TBranch        *b_gemSegment_z;   //!
     TBranch        *b_muon_n;   //!
     TBranch        *b_muon_pt;   //!
     TBranch        *b_muon_eta;   //!
@@ -220,6 +244,18 @@ void TreeAnalyzer::Init(TTree *tree)
   fChain->SetBranchAddress("rpcHit_lx", rpcHit_lx, &b_rpcHit_lx);
   fChain->SetBranchAddress("rpcHit_ly", rpcHit_ly, &b_rpcHit_ly);
   fChain->SetBranchAddress("rpcHit_bx", rpcHit_bx, &b_rpcHit_bx);
+  fChain->SetBranchAddress("dtSegment_n", &dtSegment_n, &b_dtSegment_n);
+  fChain->SetBranchAddress("dtSegment_x", dtSegment_x, &b_dtSegment_x);
+  fChain->SetBranchAddress("dtSegment_y", dtSegment_y, &b_dtSegment_y);
+  fChain->SetBranchAddress("dtSegment_z", dtSegment_z, &b_dtSegment_z);
+  fChain->SetBranchAddress("cscSegment_n", &cscSegment_n, &b_cscSegment_n);
+  fChain->SetBranchAddress("cscSegment_x", cscSegment_x, &b_cscSegment_x);
+  fChain->SetBranchAddress("cscSegment_y", cscSegment_y, &b_cscSegment_y);
+  fChain->SetBranchAddress("cscSegment_z", cscSegment_z, &b_cscSegment_z);
+  fChain->SetBranchAddress("gemSegment_n", &gemSegment_n, &b_gemSegment_n);
+  fChain->SetBranchAddress("gemSegment_x", gemSegment_x, &b_gemSegment_x);
+  fChain->SetBranchAddress("gemSegment_y", gemSegment_y, &b_gemSegment_y);
+  fChain->SetBranchAddress("gemSegment_z", gemSegment_z, &b_gemSegment_z);
   fChain->SetBranchAddress("muon_n", &muon_n, &b_muon_n);
   fChain->SetBranchAddress("muon_pt", muon_pt, &b_muon_pt);
   fChain->SetBranchAddress("muon_eta", muon_eta, &b_muon_eta);

@@ -35,6 +35,37 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
   std::vector<std::vector<unsigned>> clusters;
   clusters.resize(2);
 
+  unsigned nGEMSegment[2], nCSCSegment[2];
+  for ( unsigned i=0; i<cscSegment_n; ++i ) {
+    const TVector3 pos(cscSegment_x[i], cscSegment_y[i], cscSegment_z[i]);
+    double minDR = 0.3;
+    int match = -1;
+    for ( unsigned j=0; j<2; ++j ) {
+      //if ( p4s[j].Pt() == 0 ) continue;
+      const double dR = p4s[j].Vect().DeltaR(pos);
+      if ( dR < minDR ) {
+        minDR = dR;
+        match = j;
+      }
+    }
+    if ( match >= 0 ) ++nCSCSegment[match];
+  }
+
+  for ( unsigned i=0; i<gemSegment_n; ++i ) {
+    const TVector3 pos(gemSegment_x[i], gemSegment_y[i], gemSegment_z[i]);
+    double minDR = 0.3;
+    int match = -1;
+    for ( unsigned j=0; j<2; ++j ) {
+      //if ( p4s[j].Pt() == 0 ) continue;
+      const double dR = p4s[j].Vect().DeltaR(pos);
+      if ( dR < minDR ) {
+        minDR = dR;
+        match = j;
+      }
+    }
+    if ( match >= 0 ) ++nGEMSegment[match];
+  }
+
   for ( unsigned i=0; i<rpcHit_n; ++i ) {
     const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
     double minDR = 0.3;
@@ -47,7 +78,9 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
         match = j;
       }
     }
-    if ( match >= 0 ) clusters.at(match).push_back(i);
+    if ( match >= 0 and (nCSCSegment[match]+nGEMSegment[match] > 0) ) {
+      clusters.at(match).push_back(i);
+    }
   }
 
   return clusters;
