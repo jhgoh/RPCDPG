@@ -16,19 +16,23 @@ process.source = cms.Source("PoolSource",
 
 process.source.fileNames.append('file:/xrootd/store/user/yekang/CRAB_PrivateMC/HGCalStainless_default_me0_singleNu_RECO/190129_065738/0000/singleNu_GEN-SIM-DIGI_98.root')
 
-process.rpcInfo = cms.EDAnalyzer("MuonRPCAnalyzer",
-    genParticles = cms.InputTag("genParticles"),
-    rpcDigis = cms.InputTag("simMuonRPCDigis"),
+#process.rpcInfo = cms.EDAnalyzer("MuonRPCAnalyzer",
+#    genParticles = cms.InputTag("genParticles"),
+#    rpcDigis = cms.InputTag("simMuonRPCDigis"),
+#    rpcRecHits = cms.InputTag("rpcRecHits"),
+#    rpcSimDigis = cms.InputTag("simMuonRPCDigis:RPCDigiSimLink"),
+#    muons = cms.InputTag("muons"),
+#    vertices = cms.InputTag("offlinePrimaryVerticies"),
+#)
+
+process.rpcHit = cms.EDAnalyzer("RPCHitCounterAnalyzer",
     rpcRecHits = cms.InputTag("rpcRecHits"),
-    rpcSimDigis = cms.InputTag("simMuonRPCDigis:RPCDigiSimLink"),
-    muons = cms.InputTag("muons"),
-    vertices = cms.InputTag("offlinePrimaryVerticies"),
 )
 
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string("ntuple.root"),
 )
 process.p = cms.Path(
-    process.rpcInfo
+    process.rpcHit
 )
 
